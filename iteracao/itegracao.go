@@ -1,11 +1,7 @@
 package iteracao
 
-func Repetir(target string, times int) string {
-	var result string
+import "strings"
 
-	for i:= 0; i < times; i++ {
-		result += target
-	}
-	
-	return result
+func Repetir(target string, times int) string {
+	return strings.Repeat(target, times)
 }
