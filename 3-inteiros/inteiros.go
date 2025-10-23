@@ -1,5 +1,5 @@
 package inteiros
 
 func Adicionar(a, b int) int {
-	return 0
+	return a + b
 }
