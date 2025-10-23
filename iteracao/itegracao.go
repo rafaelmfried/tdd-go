@@ -3,5 +3,12 @@ package iteracao
 import "strings"
 
 func Repetir(target string, times int) string {
-	return strings.Repeat(target, times)
+	var builder strings.Builder
+
+	builder.Grow(len(target) * times)
+	for i := 0; i < times; i++ {
+		builder.WriteString(target)
+	}
+
+	return builder.String()
 }
