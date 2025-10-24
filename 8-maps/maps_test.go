@@ -71,3 +71,43 @@ func TestAdicionar(t *testing.T) {
 		comparaErro(t, err, maps.ErroChaveExistente)
 	})
 }
+
+func TestAtualizar(t *testing.T) {
+	t.Run("Atualiza o valor de uma chave existente no dicionário", func(t *testing.T) {
+		dicionario := maps.NewDicionario()
+		_ = dicionario.Adicionar("teste", "valor de teste")
+		dicionario.Atualizar("teste", "novo valor de teste")
+
+		resultado, err := dicionario.Busca("teste")
+		erroInexistente(t, err)
+
+		esperado := "novo valor de teste"
+		if resultado != esperado {
+			t.Errorf("resultado '%s', esperado '%s'", resultado, esperado)
+		}
+	})
+
+	t.Run("Atualizar uma chave inexistente retorna um erro", func(t *testing.T) {
+		dicionario := maps.NewDicionario()
+		err := dicionario.Atualizar("inexistente", "algum valor")
+		comparaErro(t, err, maps.ErroNaoEncontrado)
+	})
+}
+
+func TestDeletar(t *testing.T) {
+	t.Run("Deleta uma chave existente do dicionário", func(t *testing.T) {
+		dicionario := maps.NewDicionario()
+		_ = dicionario.Adicionar("teste", "valor de teste")
+		dicionario.Deletar("teste")
+
+		_, err := dicionario.Busca("teste")
+		comparaErro(t, err, maps.ErroChaveInexistente)
+	})
+
+	t.Run("Deletar uma chave inexistente não causa erro", func(t *testing.T) {
+		dicionario := maps.NewDicionario()
+		// Apenas garantir que não há pânico ou erro ao deletar uma chave inexistente
+		// mesmo sabendo que a função Deletar não retorna erro sempre void
+		dicionario.Deletar("inexistente")
+	})
+}
