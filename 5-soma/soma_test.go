@@ -1,6 +1,7 @@
 package soma_test
 
 import (
+	"reflect"
 	soma "tdd/5-soma"
 	"testing"
 )
@@ -64,5 +65,27 @@ func TestSomaTudo(t *testing.T) {
 				t.Errorf("para a chave %s, resultado %d, esperado %d", chave, resultado[chave], valorEsperado)
 			}
 		}
+	})
+
+		t.Run("soma de múltiplos slices com um vazio", func(t *testing.T) {
+		slice1 := []int{1, 2}
+		slice2 := []int{3, 4}
+		slice3 := []int{}
+		resultado := soma.SomTudo(slice1, slice2, slice3)
+		esperado := map[string]int{
+			"[1 2]": 3,
+			"[3 4]": 7,
+			"[]": 0,
+		}
+
+		if !reflect.DeepEqual(resultado, esperado) {
+			t.Errorf("resultado %v, esperado %v", resultado, esperado)
+		}
+
+		// for chave, valorEsperado := range esperado {
+		// 	if resultado[chave] != valorEsperado {
+		// 		t.Errorf("para a chave %s, resultado %d, esperado %d", chave, resultado[chave], valorEsperado)
+		// 	}
+		// }
 	})
 }
