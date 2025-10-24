@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"os"
+	mocks "tdd/10-mocks"
 	dependencias "tdd/9-dependencias"
 )
 
@@ -10,12 +12,19 @@ func HandlerCumprimenta(w http.ResponseWriter, r *http.Request) {
 	dependencias.Cumprimenta(w, "Rafael")
 }
 
-func main() {
-	err := http.ListenAndServe(":3456", http.HandlerFunc(HandlerCumprimenta))
+func newLine() {
+	fmt.Println()
+}
 
-	if err != nil {
-		panic(err)
-	}
+func main() {
+	// err := http.ListenAndServe(":3456", http.HandlerFunc(HandlerCumprimenta))
+
+	// if err != nil {
+	// 	panic(err)
+	// }
 
 	dependencias.Cumprimenta(os.Stdout, "Rafael")
+	newLine()
+	mocks.Contagem(os.Stdout)
+	newLine()
 }
