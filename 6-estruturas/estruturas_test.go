@@ -6,49 +6,39 @@ import (
 )
 
 func TestPerimetro(t *testing.T) {
-		t.Run("Retangulo", func(t *testing.T) {
-			largura := 10.0
-			altura := 15.0
-			retangulo := estruturas.NewRetangulo(largura, altura)
-			perimetro := estruturas.Perimetro(retangulo)
-			esperado := 50.0
+		testesPerimetro := []struct {
+			forma estruturas.Forma
+			esperado float64
+		}{
+			{estruturas.NewRetangulo(10.0, 15.0), 50.0},
+			{estruturas.NewCirculo(10.0), 62.83185307179586},
+			{estruturas.NewTriangulo(10.0, 15.0, 20.0), 45.0},
+		}
 
-			if perimetro != esperado {
-				t.Errorf("O perímetro calculado foi %f, mas o esperado é %f", perimetro, esperado)
+		for _, tt := range testesPerimetro {
+			perimetro := estruturas.Perimetro(tt.forma)
+			t.Logf("Perímetro calculado para o %s: %f e o esperado: %f", tt.forma.GetNome(), perimetro, tt.esperado)
+			if perimetro != tt.esperado {
+				t.Errorf("O perímetro calculado para o %s foi %f, mas o esperado é %f", tt.forma.GetNome(), perimetro, tt.esperado)
 			}
-		})
-
-		t.Run("Circulo", func(t *testing.T) {
-			circulo := estruturas.NewCirculo(10.0)
-			perimetro := estruturas.Perimetro(circulo)
-			esperado := 62.83185307179586 // 2 * π * 10
-
-			if perimetro != esperado {
-				t.Errorf("O perímetro calculado foi %f, mas o esperado é %f", perimetro, esperado)
-			}
-		})
+		}
 }
 
 func TestArea(t *testing.T) {
-		t.Run("Retangulo", func(t *testing.T) {
-			largura := 10.0
-			altura := 15.0
-			retangulo := estruturas.NewRetangulo(largura, altura)
-			area := retangulo.Area()
-			esperado := 150.0
+		testesArea := []struct {
+			forma estruturas.Forma
+			esperado float64
+		}{
+			{estruturas.NewRetangulo(10.0, 15.0), 150.0},
+			{estruturas.NewCirculo(10.0), 314.1592653589793},
+			{estruturas.NewTriangulo(3.0, 4.0, 5.0), 6.0},
+		}
 
-			if area != esperado {
-				t.Errorf("A área calculada foi %f, mas a esperada é %f", area, esperado)
+		for _, tt := range testesArea {
+			area := estruturas.Area(tt.forma)
+			t.Logf("Área calculada para o %s: %f e o esperado: %f", tt.forma.GetNome(), area, tt.esperado)
+			if area != tt.esperado {
+				t.Errorf("A área calculada para o %s foi %f, mas a esperada é %f", tt.forma.GetNome(), area, tt.esperado)
 			}
-		})
-
-		t.Run("Circulo", func(t *testing.T) {
-			circulo := estruturas.NewCirculo(10.0)
-			area := circulo.Area()
-			esperado := 314.1592653589793 // π * 10^2
-
-			if area != esperado {
-				t.Errorf("A área calculada foi %f, mas a esperada é %f", area, esperado)
-			}
-		})
+		}
 }
