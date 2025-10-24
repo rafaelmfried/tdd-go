@@ -25,6 +25,7 @@ func main() {
 
 	dependencias.Cumprimenta(os.Stdout, "Rafael")
 	newLine()
-	mocks.Contagem(os.Stdout)
+	sleeper := &mocks.SleeperPadrao{}
+	mocks.Contagem(os.Stdout, sleeper)
 	newLine()
 }
