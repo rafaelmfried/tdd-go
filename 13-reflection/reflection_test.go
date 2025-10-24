@@ -28,21 +28,17 @@ func obterValor(x interface{}) reflect.Value {
 func percorre(x interface{}, fn func(string)) {
 	valor := obterValor(x)
 
-	if valor.Kind() == reflect.Slice {
+	switch valor.Kind() {
+	case reflect.Slice:
 		for i := 0; i < valor.Len(); i++ {
 			percorre(valor.Index(i).Interface(), fn)
 		}
-		return
-	}
-
-	for i := 0; i < valor.NumField(); i++ {
-		campo := valor.Field(i)
-		switch campo.Kind() {
-		case reflect.String:
-			fn(campo.String())
-		case reflect.Struct:
-			percorre(campo.Interface(), fn)
+	case reflect.Struct:
+		for i := 0; i < valor.NumField(); i++ {
+			percorre(valor.Field(i).Interface(), fn)
 		}
+	case reflect.String:
+		fn(valor.String())
 	}
 }
 
