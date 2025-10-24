@@ -28,17 +28,26 @@ func obterValor(x interface{}) reflect.Value {
 func percorre(x interface{}, fn func(string)) {
 	valor := obterValor(x)
 
-	switch valor.Kind() {
-	case reflect.Slice:
-		for i := 0; i < valor.Len(); i++ {
-			percorre(valor.Index(i).Interface(), fn)
-		}
-	case reflect.Struct:
-		for i := 0; i < valor.NumField(); i++ {
-			percorre(valor.Field(i).Interface(), fn)
-		}
+	percorrerValor := func (valor reflect.Value) {
+		percorre(valor.Interface(), fn)
+	}
+
+switch valor.Kind() {
 	case reflect.String:
 		fn(valor.String())
+	case reflect.Struct:
+		quantidadeDeCampos := valor.NumField()
+		for i := 0; i < quantidadeDeCampos; i++ {
+			percorrerValor(valor.Field(i))
+		}
+	case reflect.Slice, reflect.Array:
+		for i := 0; i < valor.Len(); i++ {
+			percorrerValor(valor.Index(i))
+		}
+	case reflect.Map:
+		for _, chave := range valor.MapKeys() {
+			percorrerValor(valor.MapIndex(chave))
+		}
 	}
 }
 
@@ -103,6 +112,22 @@ func TestReflection(t *testing.T) {
 					{"São Paulo", "Moema", 101},
 				},
 				[]string{"Salvador", "Pituba", "São Paulo", "Moema"},
+			},
+			{
+				"Arrays",
+				[2]Endereco{
+					{"Salvador", "Pituba", 44},
+					{"São Paulo", "Moema", 101},
+				},
+				[]string{"Salvador", "Pituba", "São Paulo", "Moema"},
+			},
+			{
+				"Maps",
+				map[string]string{
+					"Um": "Um",
+					"Dois": "Dois",
+				},
+				[]string{"Um", "Dois"},
 			},
 		}
 
