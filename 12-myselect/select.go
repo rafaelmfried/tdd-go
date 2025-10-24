@@ -7,15 +7,13 @@ import (
 )
 
 var ErrTimeout = fmt.Errorf("tempo de espera excedido na requisicao")
+var responseTimeout = 2 * time.Second
 
-func Corredor(url1, url2 string, timeLimit time.Duration) (vencedor string, erro error) {
-	// duracaoA := medirTempoRequisicao(url1)
-	// duracaoB := medirTempoRequisicao(url2)
+func Corredor(url1, url2 string) (vencedor string, erro error) {
+	return CorredorConfiguravel(url1, url2, responseTimeout)
+}
 
-	// if duracaoA < duracaoB {
-	// 	return url1
-	// }
-	// return url2
+func CorredorConfiguravel(url1, url2 string, timeLimit time.Duration) (vencedor string, erro error) {
 	select {
 	case <-ping(url1):
 		return url1, nil

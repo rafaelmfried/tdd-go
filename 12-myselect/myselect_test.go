@@ -28,7 +28,7 @@ func TestCorredor(t *testing.T) {
 
 		esperado := URLRapida
 
-		obtido, err := myselect.Corredor(URLLenta, URLRapida, 50*time.Millisecond)
+		obtido, err := myselect.Corredor(URLLenta, URLRapida)
 
 		if err != nil {
 			t.Errorf("esperado sucesso, mas obteve erro: %v", err)
@@ -42,8 +42,8 @@ func TestCorredor(t *testing.T) {
 	})
 
 	t.Run("retorna um erro se o servidor demorar muito tempo", func(t *testing.T) {
-		servidorLento := criarServidorComDelay(51 * time.Millisecond)
-		servidorRapido := criarServidorComDelay(20 * time.Millisecond)
+		servidorLento := criarServidorComDelay(3 * time.Second)
+		servidorRapido := criarServidorComDelay(2 * time.Second)
 
 		// Faz chamar no final, porem mais facil de garantir o fechamento
 		defer servidorLento.Close()
@@ -52,7 +52,7 @@ func TestCorredor(t *testing.T) {
 		URLLenta := servidorLento.URL
 		URLRapida := servidorRapido.URL
 
-		_, err := myselect.Corredor(URLLenta, URLRapida, 10*time.Millisecond)
+		_, err := myselect.Corredor(URLLenta, URLRapida)
 
 		if err == nil {
 			t.Errorf("esperado um erro, mas obteve sucesso")
