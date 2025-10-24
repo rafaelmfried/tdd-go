@@ -81,11 +81,5 @@ func TestSomaTudo(t *testing.T) {
 		if !reflect.DeepEqual(resultado, esperado) {
 			t.Errorf("resultado %v, esperado %v", resultado, esperado)
 		}
-
-		// for chave, valorEsperado := range esperado {
-		// 	if resultado[chave] != valorEsperado {
-		// 		t.Errorf("para a chave %s, resultado %d, esperado %d", chave, resultado[chave], valorEsperado)
-		// 	}
-		// }
 	})
 }
