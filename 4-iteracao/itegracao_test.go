@@ -1,7 +1,7 @@
 package iteracao_test
 
 import (
-	iteracao "tdd/iteracao"
+	iteracao "tdd/4-iteracao"
 	"testing"
 )
 
