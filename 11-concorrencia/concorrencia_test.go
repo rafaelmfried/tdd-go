@@ -1,6 +1,6 @@
 /*
 * Copyright © 2024 Rafael Friederick <rafaelfriederick@gmail.com>
-* go test -bench=. -benchmem -run=^$ -count=3
+* go test -bench=. -benchmem ./11-concorrencia
 * Agora falando em concorrencia em go para rodar processos no bloqueantes de forma concorrente
 * precisamos usar goroutines e para isso colocamos go na frente da chamada da funcao
 * go test -race ajuda a identificar condicoes de concorrencia que podem causar problemas
