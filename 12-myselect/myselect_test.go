@@ -6,6 +6,7 @@
 package myselect_test
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	myselect "tdd/12-myselect"
@@ -27,10 +28,34 @@ func TestCorredor(t *testing.T) {
 
 		esperado := URLRapida
 
-		obtido := myselect.Corredor(URLLenta, URLRapida)
+		obtido, err := myselect.Corredor(URLLenta, URLRapida, 50*time.Millisecond)
+
+		if err != nil {
+			t.Errorf("esperado sucesso, mas obteve erro: %v", err)
+		}
 
 		if obtido != esperado {
 			t.Errorf("obtido: %q, esperado: %q", obtido, esperado)
+		}
+
+		fmt.Printf("esperado: %q, obtido: %q", esperado, obtido)
+	})
+
+	t.Run("retorna um erro se o servidor demorar muito tempo", func(t *testing.T) {
+		servidorLento := criarServidorComDelay(51 * time.Millisecond)
+		servidorRapido := criarServidorComDelay(20 * time.Millisecond)
+
+		// Faz chamar no final, porem mais facil de garantir o fechamento
+		defer servidorLento.Close()
+		defer servidorRapido.Close()
+
+		URLLenta := servidorLento.URL
+		URLRapida := servidorRapido.URL
+
+		_, err := myselect.Corredor(URLLenta, URLRapida, 10*time.Millisecond)
+
+		if err == nil {
+			t.Errorf("esperado um erro, mas obteve sucesso")
 		}
 	})
 }

@@ -1,10 +1,14 @@
 package myselect
 
 import (
+	"fmt"
 	"net/http"
+	"time"
 )
 
-func Corredor(url1, url2 string) (vencedor string) {
+var ErrTimeout = fmt.Errorf("tempo de espera excedido na requisicao")
+
+func Corredor(url1, url2 string, timeLimit time.Duration) (vencedor string, erro error) {
 	// duracaoA := medirTempoRequisicao(url1)
 	// duracaoB := medirTempoRequisicao(url2)
 
@@ -14,9 +18,11 @@ func Corredor(url1, url2 string) (vencedor string) {
 	// return url2
 	select {
 	case <-ping(url1):
-		return url1
+		return url1, nil
 	case <-ping(url2):
-		return url2
+		return url2, nil
+	case <-time.After(timeLimit):
+		return "", ErrTimeout
 	}
 }
 
