@@ -20,10 +20,11 @@ func (s *SleeperPadrao) Sleep() {
 }
 
 func Contagem(saida io.Writer, sleeper Sleeper) {
-	for i := inicioContagem; i > 0; i-- {
-		sleeper.Sleep()
-		fmt.Fprintln(saida, i)
-	}
-	sleeper.Sleep()
-	fmt.Fprint(saida, fraseFinal)
+    for i := inicioContagem; i > 0; i-- {
+			sleeper.Sleep()
+			fmt.Fprintln(saida, i)
+    }
+
+    sleeper.Sleep()
+    fmt.Fprint(saida, fraseFinal)
 }
