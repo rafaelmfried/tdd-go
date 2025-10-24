@@ -15,14 +15,12 @@ import (
 
 func TestCorredor(t *testing.T) {
 	t.Run("teste de concorrencia com select", func(t *testing.T) {
-		servidorLento := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			time.Sleep(20 * time.Millisecond)
-			w.WriteHeader(http.StatusOK)
-		}))
+		servidorLento := criarServidorComDelay(20 * time.Millisecond)
+		servidorRapido := criarServidorComDelay(10 * time.Millisecond)
 
-		servidorRapido := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(http.StatusOK)
-		}))
+		// Faz chamar no final, porem mais facil de garantir o fechamento
+		defer servidorLento.Close()
+		defer servidorRapido.Close()
 
 		URLLenta := servidorLento.URL
 		URLRapida := servidorRapido.URL
@@ -34,8 +32,12 @@ func TestCorredor(t *testing.T) {
 		if obtido != esperado {
 			t.Errorf("obtido: %q, esperado: %q", obtido, esperado)
 		}
-
-		servidorLento.Close()
-		servidorRapido.Close()
 	})
+}
+
+func criarServidorComDelay(delay time.Duration) *httptest.Server {
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(delay)
+		w.WriteHeader(http.StatusOK)
+	}))
 }
