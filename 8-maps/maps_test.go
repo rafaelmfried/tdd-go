@@ -1,3 +1,10 @@
+/*
+	Aqui vemos algumas coisas interessantes sobre maps em Go:
+	- Maps são tipos de referência, então quando passamos um map para uma função ou método,
+	  estamos passando uma referência para o mapa original. Isso significa que alterações feitas
+	  no mapa dentro da função ou método afetarão o mapa original.
+*/
+
 package maps_test
 
 import (
@@ -24,7 +31,8 @@ func erroInexistente(t *testing.T, resultado error) {
 
 func TestBusca(t *testing.T) {
 	t.Run("Busca um valor existente em um mapa", func(t *testing.T) {
-		dicionario := maps.Dicionario{"teste": "isso é um teste"}
+		dicionario := maps.NewDicionario()
+		dicionario.Adicionar("teste", "isso é um teste")
 		esperado := "isso é um teste"
 		resultado, erro := dicionario.Busca("teste")
 
@@ -39,5 +47,27 @@ func TestBusca(t *testing.T) {
 		dicionario := maps.Dicionario{}
 		_, err := dicionario.Busca("inexistente")
 		comparaErro(t, err, maps.ErroChaveInexistente)
+	})
+}
+
+func TestAdicionar(t *testing.T) {
+	t.Run("Adiciona um novo par chave-valor ao dicionário", func(t *testing.T) {
+		dicionario := maps.NewDicionario()
+		dicionario.Adicionar("teste", "valor de teste")
+
+		resultado, err := dicionario.Busca("teste")
+		erroInexistente(t, err)
+
+		esperado := "valor de teste"
+		if resultado != esperado {
+			t.Errorf("resultado '%s', esperado '%s'", resultado, esperado)
+		}
+	})
+
+	t.Run("Adicionar uma segunda vez uma chave existente retorna um erro", func(t *testing.T) {
+		dicionario := maps.NewDicionario()
+		_ = dicionario.Adicionar("teste", "valor de teste")
+		err := dicionario.Adicionar("teste", "valor de teste")
+		comparaErro(t, err, maps.ErroChaveExistente)
 	})
 }

@@ -1,14 +1,35 @@
 package maps
 
-import "fmt"
+import (
+	"fmt"
+)
 
 var ErroChaveInexistente = fmt.Errorf("chave inexistente")
+var ErroChaveExistente = fmt.Errorf("chave já existente")
 
-type Dicionario map[string]string
+type Dicionario struct {
+	mapping map[string]string
+}
+
+func NewDicionario() *Dicionario {
+	return &Dicionario{mapping: make(map[string]string)}
+}
 
 func (d Dicionario) Busca(chave string) (string, error) {
-	if valor, existe := d[chave]; existe {
+	if valor, existe := d.mapping[chave]; existe {
 		return valor, nil
 	}
 	return "", ErroChaveInexistente
+}
+
+func (d Dicionario) Adicionar(chave, valor string) error {
+	_, err := d.Busca(chave)
+
+	if err == nil {
+		return ErroChaveExistente
+	}
+
+	d.mapping[chave] = valor
+
+	return nil
 }
