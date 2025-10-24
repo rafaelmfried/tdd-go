@@ -6,6 +6,7 @@ import (
 	"os"
 	mocks "tdd/10-mocks"
 	dependencias "tdd/9-dependencias"
+	"time"
 )
 
 func HandlerCumprimenta(w http.ResponseWriter, r *http.Request) {
@@ -25,7 +26,9 @@ func main() {
 
 	dependencias.Cumprimenta(os.Stdout, "Rafael")
 	newLine()
-	sleeper := &mocks.SleeperPadrao{}
+	// sleeper := &mocks.SleeperPadrao{}
+	duration := 1 * time.Second
+	sleeper := mocks.NewSleeper(duration, time.Sleep)
 	mocks.Contagem(os.Stdout, sleeper)
 	newLine()
 }

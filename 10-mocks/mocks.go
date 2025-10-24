@@ -12,11 +12,17 @@ const fraseFinal = "Vai!"
 type Sleeper interface {
 	Sleep()
 }
+type SleeperConfiguravel struct {
+	duration time.Duration
+	sleep func(time.Duration)
+}
 
-type SleeperPadrao struct{}
+func (s *SleeperConfiguravel) Sleep() {
+	s.sleep(s.duration)
+}
 
-func (s *SleeperPadrao) Sleep() {
-	time.Sleep(1 * time.Second)
+func NewSleeper(duration time.Duration, sleeper func(time.Duration)) *SleeperConfiguravel {
+	return &SleeperConfiguravel{duration, sleeper}
 }
 
 func Contagem(saida io.Writer, sleeper Sleeper) {
