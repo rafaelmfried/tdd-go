@@ -2,6 +2,7 @@ package contexto_test
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	contexto "tdd/15-contexto"
@@ -37,6 +38,24 @@ func (s *SpyStore) Fetch(ctx context.Context) (string, error) {
 		case res := <- data:
 			return res, nil
 	}
+}
+
+type SpyResponseWriter struct {
+	written bool
+}
+
+func (s *SpyResponseWriter) Header() http.Header {
+	s.written = true
+	return nil
+}
+
+func (s *SpyResponseWriter) Write([]byte) (int, error) {
+	s.written = true
+	return 0, errors.New("n implementado")
+}
+
+func (s *SpyResponseWriter) WriteHeader(statusCode int) {
+	s.written = true
 }
 
 func TestHandler(t *testing.T) {
@@ -86,18 +105,22 @@ func TestServer(t *testing.T) {
 		}
 	})
 
-	// t.Run("avisa a store para cancelar:", func(t *testing.T) {
-	// 	store := SpyStore{response: data, t: t}
-	// 	server := contexto.Server(&store)
+	t.Run("avisa a store para cancelar:", func(t *testing.T) {
+		store := SpyStore{response: data, t: t}
+		server := contexto.Server(&store)
 
-	// 	request := httptest.NewRequest(http.MethodGet, "/", nil)
-	// 	cancellingCtx, cancel := context.WithCancel(request.Context())
-	// 	time.AfterFunc(5*time.Millisecond, cancel)
-	// 	request = request.WithContext(cancellingCtx)
-	// 	response := httptest.NewRecorder()
+		request := httptest.NewRequest(http.MethodGet, "/", nil)
+		cancellingCtx, cancel := context.WithCancel(request.Context())
+		time.AfterFunc(5*time.Millisecond, cancel)
+		request = request.WithContext(cancellingCtx)
+		response := &SpyResponseWriter{}
 
-	// 	server.ServeHTTP(response, request)
+		server.ServeHTTP(response, request)
 
-	// 	store.WasCancelled()
-	// })
+		if response.written {
+			t.Errorf("a resposta nao deveria ser escrita")
+		}
+
+		// store.WasCancelled()
+	})
 }
