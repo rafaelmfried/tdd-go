@@ -20,3 +20,7 @@ Websockets
 # E parece ser dificil ver se a chamada do POST funcionou sem o registro do metodo antes
 
 Curiosidade legal: mocking significa zombar, mas usamos para definir classes com valores pre setados em testes
+
+## Agora vamos criar o seguinte caso de teste:
+
+# Quando o usuario n existir deve retornar um erro 404 de jogador not found com nossa mensagem

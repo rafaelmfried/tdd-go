@@ -43,6 +43,7 @@ func NewServidorJogador(armazenamento ArmazenamentoJogador) *ServidorJogador {
 
 func (s *ServidorJogador) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	jogador := request.URL.Path[len("/jogadores/"):]
+	writer.WriteHeader(http.StatusNotFound)
 	fmt.Fprint(writer, s.armazenamento.ObterPontuacaoJogador(jogador))
 }
 
