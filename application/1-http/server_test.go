@@ -12,9 +12,12 @@ type EsbocoArmazenamentoJogador struct {
 	pontuacoes map[string]int
 }
 
-func (e *EsbocoArmazenamentoJogador) ObterPontuacaoJogador(nome string) int {
-	pontuacao := e.pontuacoes[nome]
-	return pontuacao
+func (e *EsbocoArmazenamentoJogador) ObterPontuacaoJogador(nome string) (pontuacao int, err error) {
+	pontuacao = e.pontuacoes[nome]
+	if pontuacao == 0 {
+		return 0, server.ErrJogadorNotFound
+	}
+	return pontuacao, nil
 }
 
 func TestObterJogadores(t *testing.T) {
@@ -89,4 +92,21 @@ func verificarStatusCodeRequisicao(t *testing.T, recebido, esperado int) {
 	if recebido != esperado {
 		t.Errorf("nao recebeu o codigo esperado: %d, recebido: %d", esperado, recebido)
 	}
+}
+
+func TestArmazenamentoVitorias(t *testing.T) {
+	armazenamento := EsbocoArmazenamentoJogador{
+		map[string]int{},
+	}
+
+	server := server.NewServidorJogador(&armazenamento)
+
+	t.Run("retorna status aceito para chamadas ao metodo POST", func(t *testing.T) {
+		requisicao, _ := http.NewRequest(http.MethodPost, "/jogadores/Rafael", nil)
+		resposta := httptest.NewRecorder()
+
+		server.ServeHTTP(resposta, requisicao)
+
+		verificarStatusCodeRequisicao(t, resposta.Code, http.StatusAccepted)
+	})
 }

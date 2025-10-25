@@ -20,17 +20,13 @@ var jogadores = map[string]Jogador{
 var ErrJogadorNotFound = fmt.Errorf("Jogador n encontrado")
 
 type ArmazenamentoJogador interface {
-	ObterPontuacaoJogador(nome string) int
+	ObterPontuacaoJogador(nome string) (pontuacao int, err error)
 }
 
 type ArmazenamentoJogadorInMemory struct {}
 
-func (a *ArmazenamentoJogadorInMemory) ObterPontuacaoJogador(nome string) int {
-	pontuacao, err := obterPontuacaoJogador(nome)
-	if err != nil {
-		return 0
-	}
-	return pontuacao
+func (a *ArmazenamentoJogadorInMemory) ObterPontuacaoJogador(nome string) (pontuacao int, err error) {
+	return obterPontuacaoJogador(nome)
 }
 
 type ServidorJogador struct {
@@ -41,10 +37,26 @@ func NewServidorJogador(armazenamento ArmazenamentoJogador) *ServidorJogador {
 	return &ServidorJogador{armazenamento: armazenamento}
 }
 
-func (s *ServidorJogador) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+func (s *ServidorJogador) registrarVitoria(writer http.ResponseWriter) {
+	writer.WriteHeader(http.StatusAccepted)
+} 
+
+func (s *ServidorJogador) mostrarPontuacao(writer http.ResponseWriter, request http.Request) {
 	jogador := request.URL.Path[len("/jogadores/"):]
-	writer.WriteHeader(http.StatusNotFound)
-	fmt.Fprint(writer, s.armazenamento.ObterPontuacaoJogador(jogador))
+	pontuacao, err := s.armazenamento.ObterPontuacaoJogador(jogador)
+	if err == ErrJogadorNotFound {
+		writer.WriteHeader(http.StatusNotFound)
+	}
+	fmt.Fprint(writer, pontuacao)
+}
+
+func (s *ServidorJogador) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	switch request.Method {
+	case http.MethodPost:
+		s.registrarVitoria(writer)
+	case http.MethodGet:
+		s.mostrarPontuacao(writer, *request)
+	}
 }
 
 func obterPontuacaoJogador(nome string) (pontuacao int, err error) {
