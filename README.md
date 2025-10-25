@@ -24,3 +24,7 @@ Curiosidade legal: mocking significa zombar, mas usamos para definir classes com
 ## Agora vamos criar o seguinte caso de teste:
 
 # Quando o usuario n existir deve retornar um erro 404 de jogador not found com nossa mensagem
+
+# Proximos passos fazer o PostgresArmazenamentoJogador implementando o Armazenamento jogador
+
+# Conceitos

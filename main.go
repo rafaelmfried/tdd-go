@@ -29,9 +29,9 @@ func main() {
 	// duration := 1 * time.Second
 	// sleeper := mocks.NewSleeper(duration, time.Sleep)
 	// mocks.Contagem(os.Stdout, sleeper)
-	// newLine()
+	newLine()
 
-	armazenamento := &server.ArmazenamentoJogadorInMemory{}
+	armazenamento := server.NovoArmazenamentoJogadorInMemory()
 	server := server.NewServidorJogador(armazenamento)
 
 	if err := http.ListenAndServe(":2312", server); err != nil {
