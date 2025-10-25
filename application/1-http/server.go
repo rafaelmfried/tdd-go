@@ -44,17 +44,17 @@ func (a *ArmazenamentoJogadorInMemory) RegistrarVitoria(nome string) {
 
 type ServidorJogador struct {
 	armazenamento ArmazenamentoJogador
-	roteador      *http.ServeMux
+	http.Handler
 }
 
 func NewServidorJogador(armazenamento ArmazenamentoJogador) *ServidorJogador {
+	s := new(ServidorJogador)
+	s.armazenamento = armazenamento
 	roteador := http.NewServeMux()
-	servidor := &ServidorJogador{armazenamento: armazenamento, roteador: roteador}
-
-	roteador.HandleFunc("/jogadores/", servidor.tratarRequisicaoJogador)
-	roteador.HandleFunc("/liga", servidor.tratarRequisicaoLiga)
-
-	return servidor
+	roteador.Handle("/jogadores/", http.HandlerFunc(s.tratarRequisicaoJogador))
+	roteador.Handle("/liga", http.HandlerFunc(s.tratarRequisicaoLiga))
+	s.Handler = roteador
+	return s
 }
 
 func (s *ServidorJogador) registrarVitoria(writer http.ResponseWriter, request *http.Request) {
@@ -70,10 +70,6 @@ func (s *ServidorJogador) mostrarPontuacao(writer http.ResponseWriter, request h
 		writer.WriteHeader(http.StatusNotFound)
 	}
 	fmt.Fprint(writer, pontuacao)
-}
-
-func (s *ServidorJogador) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
-	s.roteador.ServeHTTP(writer, request)
 }
 
 func (s *ServidorJogador) tratarRequisicaoJogador(writer http.ResponseWriter, request *http.Request) {
