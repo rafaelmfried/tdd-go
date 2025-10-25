@@ -4,32 +4,39 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	server "tdd/application/1-http"
+	"strconv"
+	. "tdd/application/1-http"
 	"testing"
 )
 
 type EsbocoArmazenamentoJogador struct {
 	pontuacoes map[string]int
+	registrosVitorias []string
 }
 
 func (e *EsbocoArmazenamentoJogador) ObterPontuacaoJogador(nome string) (pontuacao int, err error) {
 	pontuacao = e.pontuacoes[nome]
 	if pontuacao == 0 {
-		return 0, server.ErrJogadorNotFound
+		return 0, ErrJogadorNotFound
 	}
 	return pontuacao, nil
 }
 
+func (e *EsbocoArmazenamentoJogador) RegistrarVitoria(nome string) {
+	e.registrosVitorias = append(e.registrosVitorias, nome)
+}
+
 func TestObterJogadores(t *testing.T) {
 	armazenamento := EsbocoArmazenamentoJogador{
-		map[string]int{
+		pontuacoes: map[string]int{
 			"Rafael": 20,
 			"Vanessa": 15,
 			"Pedro": 10,
 		},
+		registrosVitorias: []string{},
 	}
 
-	server := server.NewServidorJogador(&armazenamento)
+	server := NewServidorJogador(&armazenamento)
 	t.Run("retorna o resultdo de Rafael", func(t *testing.T) {
 		requisicao := novaRequisicaoObterPontuacao("Rafael")
 		resposta := httptest.NewRecorder()
@@ -97,16 +104,79 @@ func verificarStatusCodeRequisicao(t *testing.T, recebido, esperado int) {
 func TestArmazenamentoVitorias(t *testing.T) {
 	armazenamento := EsbocoArmazenamentoJogador{
 		map[string]int{},
+		nil,
 	}
 
-	server := server.NewServidorJogador(&armazenamento)
+	server := NewServidorJogador(&armazenamento)
 
 	t.Run("retorna status aceito para chamadas ao metodo POST", func(t *testing.T) {
-		requisicao, _ := http.NewRequest(http.MethodPost, "/jogadores/Rafael", nil)
+		requisicao := novaRequisicaoRegistroVitoriaPost("Rafael")
 		resposta := httptest.NewRecorder()
 
 		server.ServeHTTP(resposta, requisicao)
 
 		verificarStatusCodeRequisicao(t, resposta.Code, http.StatusAccepted)
+		chamadasEsperadas := 1
+		chamadasObtidas := len(armazenamento.registrosVitorias)
+		if (chamadasObtidas != chamadasEsperadas) {
+			t.Errorf("eram esperadas %d chamadas e obtivemos %d", chamadasEsperadas, chamadasObtidas)
+		}
 	})
+
+	t.Run("registra vitorias na chamada ao metodo http post", func(t *testing.T) {
+		jogador := "Vanessa"
+
+		requisicao := novaRequisicaoRegistroVitoriaPost(jogador)
+		resposta := httptest.NewRecorder()
+
+		server.ServeHTTP(resposta, requisicao)
+
+		chamadasEsperadas := 2
+		chamadasObtidas := len(armazenamento.registrosVitorias)
+
+		if chamadasObtidas != chamadasEsperadas {
+			t.Errorf("eram esperadas %d chamadas e obtivemos %d", chamadasEsperadas, chamadasObtidas)
+		}
+
+		jogadorRecebido := armazenamento.registrosVitorias[chamadasEsperadas - 1]
+
+		if jogadorRecebido != jogador {
+			t.Errorf("nao registrou o vencedor corretamente, recebemos %s, esperava %s", jogadorRecebido, jogador)
+		}
+	})
+
+	t.Run("registra e busca as vitorias", func(t *testing.T) {
+		armazenamento := NovoArmazenamentoJogadorInMemory()
+		servidor := NewServidorJogador(armazenamento)
+		// investigar porque a pontuacao inicial esta como 0 para todos jogadores pelo novo armazenamento in memory
+		jogador := "Marcos"
+
+		requestPontuacaoInicial := httptest.NewRecorder()
+		servidor.ServeHTTP(requestPontuacaoInicial, novaRequisicaoObterPontuacao(jogador))
+		// converter string para int em go
+		novo := requestPontuacaoInicial.Body.String()
+		t.Logf("recebido no requesto pontuacao inicial %s", novo)
+		pontuacaoInicial, _ := strconv.Atoi(novo)
+
+		servidor.ServeHTTP(httptest.NewRecorder(), novaRequisicaoRegistroVitoriaPost(jogador))
+		servidor.ServeHTTP(httptest.NewRecorder(), novaRequisicaoRegistroVitoriaPost(jogador))
+		servidor.ServeHTTP(httptest.NewRecorder(), novaRequisicaoRegistroVitoriaPost(jogador))
+
+		pontuacaoEsperada := pontuacaoInicial + 3
+
+		t.Logf("pontuacao esperada: %d", pontuacaoEsperada)
+
+		resposta := httptest.NewRecorder()
+
+		servidor.ServeHTTP(resposta, novaRequisicaoObterPontuacao(jogador))
+		verificarStatusCodeRequisicao(t, resposta.Code, http.StatusOK)
+
+		verificarCorpoRequisicao(t, resposta.Body.String(), strconv.Itoa(pontuacaoEsperada))
+
+	})
+}
+
+func novaRequisicaoRegistroVitoriaPost(nome string) *http.Request {
+	requisicao, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("/jogadores/%s", nome), nil)
+	return requisicao
 }

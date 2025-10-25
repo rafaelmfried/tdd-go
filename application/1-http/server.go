@@ -17,16 +17,29 @@ var jogadores = map[string]Jogador{
 	"Pedro":   {Nome: "Pedro", Pontos: 20},
 }
 
+var vitorias []string
+
 var ErrJogadorNotFound = fmt.Errorf("Jogador n encontrado")
 
 type ArmazenamentoJogador interface {
 	ObterPontuacaoJogador(nome string) (pontuacao int, err error)
+	RegistrarVitoria(nome string)
 }
 
-type ArmazenamentoJogadorInMemory struct {}
+type ArmazenamentoJogadorInMemory struct {
+	storage map[string]int
+}
+
+func NovoArmazenamentoJogadorInMemory() *ArmazenamentoJogadorInMemory {
+	return &ArmazenamentoJogadorInMemory{map[string]int{}}
+}
 
 func (a *ArmazenamentoJogadorInMemory) ObterPontuacaoJogador(nome string) (pontuacao int, err error) {
 	return obterPontuacaoJogador(nome)
+}
+
+func (a *ArmazenamentoJogadorInMemory) RegistrarVitoria(nome string) {
+	registraVitoria(nome)
 }
 
 type ServidorJogador struct {
@@ -37,7 +50,9 @@ func NewServidorJogador(armazenamento ArmazenamentoJogador) *ServidorJogador {
 	return &ServidorJogador{armazenamento: armazenamento}
 }
 
-func (s *ServidorJogador) registrarVitoria(writer http.ResponseWriter) {
+func (s *ServidorJogador) registrarVitoria(writer http.ResponseWriter, request *http.Request) {
+	jogador := request.URL.Path[len("/jogadores/"):]
+	s.armazenamento.RegistrarVitoria(jogador)
 	writer.WriteHeader(http.StatusAccepted)
 } 
 
@@ -53,7 +68,7 @@ func (s *ServidorJogador) mostrarPontuacao(writer http.ResponseWriter, request h
 func (s *ServidorJogador) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	switch request.Method {
 	case http.MethodPost:
-		s.registrarVitoria(writer)
+		s.registrarVitoria(writer, request)
 	case http.MethodGet:
 		s.mostrarPontuacao(writer, *request)
 	}
@@ -64,6 +79,15 @@ func obterPontuacaoJogador(nome string) (pontuacao int, err error) {
 		return jogador.Pontos, nil
 	}
 	return 0, ErrJogadorNotFound
+}
+
+func registraVitoria(nome string) {
+	vitorias = append(vitorias, nome)
+	if jogador, ok := jogadores[nome]; ok {
+		jogadores[nome] = Jogador{Nome: nome, Pontos: jogador.Pontos + 1}
+		return
+	}
+	jogadores[nome] = Jogador{ Nome: nome, Pontos: 1}
 }
 
 func Server() {
