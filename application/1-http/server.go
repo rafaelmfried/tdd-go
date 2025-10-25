@@ -44,10 +44,17 @@ func (a *ArmazenamentoJogadorInMemory) RegistrarVitoria(nome string) {
 
 type ServidorJogador struct {
 	armazenamento ArmazenamentoJogador
+	roteador      *http.ServeMux
 }
 
 func NewServidorJogador(armazenamento ArmazenamentoJogador) *ServidorJogador {
-	return &ServidorJogador{armazenamento: armazenamento}
+	roteador := http.NewServeMux()
+	servidor := &ServidorJogador{armazenamento: armazenamento, roteador: roteador}
+
+	roteador.HandleFunc("/jogadores/", servidor.tratarRequisicaoJogador)
+	roteador.HandleFunc("/liga", servidor.tratarRequisicaoLiga)
+
+	return servidor
 }
 
 func (s *ServidorJogador) registrarVitoria(writer http.ResponseWriter, request *http.Request) {
@@ -66,14 +73,7 @@ func (s *ServidorJogador) mostrarPontuacao(writer http.ResponseWriter, request h
 }
 
 func (s *ServidorJogador) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
-	roteador := http.NewServeMux()
-	roteador.HandleFunc("/jogadores/", func(w http.ResponseWriter, r *http.Request) {
-		s.tratarRequisicaoJogador(w, r)
-	})
-	roteador.HandleFunc("/liga", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	})
-	roteador.ServeHTTP(writer, request)
+	s.roteador.ServeHTTP(writer, request)
 }
 
 func (s *ServidorJogador) tratarRequisicaoJogador(writer http.ResponseWriter, request *http.Request) {
@@ -83,6 +83,10 @@ func (s *ServidorJogador) tratarRequisicaoJogador(writer http.ResponseWriter, re
 	case http.MethodGet:
 		s.mostrarPontuacao(writer, *request)
 	}
+}
+
+func (s *ServidorJogador) tratarRequisicaoLiga(writer http.ResponseWriter, request *http.Request) {
+	writer.WriteHeader(http.StatusOK)
 }
 
 func obterPontuacaoJogador(nome string) (pontuacao int, err error) {
