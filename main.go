@@ -4,11 +4,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
-	mocks "tdd/10-mocks"
 	dependencias "tdd/9-dependencias"
 	server "tdd/application/1-http"
-	"time"
 )
 
 func HandlerCumprimenta(w http.ResponseWriter, r *http.Request) {
@@ -26,15 +23,16 @@ func main() {
 	// 	panic(err)
 	// }
 
-	dependencias.Cumprimenta(os.Stdout, "Rafael")
-	newLine()
-	// sleeper := &mocks.SleeperPadrao{}
-	duration := 1 * time.Second
-	sleeper := mocks.NewSleeper(duration, time.Sleep)
-	mocks.Contagem(os.Stdout, sleeper)
-	newLine()
+	// dependencias.Cumprimenta(os.Stdout, "Rafael")
+	// newLine()
+	// // sleeper := &mocks.SleeperPadrao{}
+	// duration := 1 * time.Second
+	// sleeper := mocks.NewSleeper(duration, time.Sleep)
+	// mocks.Contagem(os.Stdout, sleeper)
+	// newLine()
 
-	server := &server.ServidorJogador{}
+	armazenamento := &server.ArmazenamentoJogadorInMemory{}
+	server := server.NewServidorJogador(armazenamento)
 
 	if err := http.ListenAndServe(":2312", server); err != nil {
 		log.Fatalf("binding port 2312 %v", err)
