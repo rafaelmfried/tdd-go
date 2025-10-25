@@ -66,6 +66,17 @@ func (s *ServidorJogador) mostrarPontuacao(writer http.ResponseWriter, request h
 }
 
 func (s *ServidorJogador) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	roteador := http.NewServeMux()
+	roteador.HandleFunc("/jogadores/", func(w http.ResponseWriter, r *http.Request) {
+		s.tratarRequisicaoJogador(w, r)
+	})
+	roteador.HandleFunc("/liga", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+	roteador.ServeHTTP(writer, request)
+}
+
+func (s *ServidorJogador) tratarRequisicaoJogador(writer http.ResponseWriter, request *http.Request) {
 	switch request.Method {
 	case http.MethodPost:
 		s.registrarVitoria(writer, request)

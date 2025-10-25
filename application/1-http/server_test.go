@@ -180,3 +180,22 @@ func novaRequisicaoRegistroVitoriaPost(nome string) *http.Request {
 	requisicao, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("/jogadores/%s", nome), nil)
 	return requisicao
 }
+
+func TestLiga(t *testing.T) {
+	armazenamento := EsbocoArmazenamentoJogador{}
+	servidor := NewServidorJogador(&armazenamento)
+
+	t.Run("retorna 200 em liga", func(t *testing.T) {
+		requisicao := novaRequisicaoBuscaLiga()
+		resposta := httptest.NewRecorder()
+
+		servidor.ServeHTTP(resposta, requisicao)
+
+		verificarStatusCodeRequisicao(t, resposta.Code, http.StatusOK)
+	})
+}
+
+func novaRequisicaoBuscaLiga() *http.Request {
+	requisicao, _ := http.NewRequest(http.MethodGet, "/liga", nil)
+	return requisicao
+}

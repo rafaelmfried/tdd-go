@@ -28,3 +28,7 @@ Curiosidade legal: mocking significa zombar, mas usamos para definir classes com
 # Proximos passos fazer o PostgresArmazenamentoJogador implementando o Armazenamento jogador
 
 # Conceitos
+
+### Requisito:
+
+Criar endpoint GET /liga que retorna todos os Jogadores
