@@ -1,0 +1,3 @@
+### GET JOGADOR
+
+GET http://localhost:2312/jogadores/Rafael

@@ -2,10 +2,12 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	mocks "tdd/10-mocks"
 	dependencias "tdd/9-dependencias"
+	server "tdd/application/1-http"
 	"time"
 )
 
@@ -31,4 +33,10 @@ func main() {
 	sleeper := mocks.NewSleeper(duration, time.Sleep)
 	mocks.Contagem(os.Stdout, sleeper)
 	newLine()
+
+	server := &server.ServidorJogador{}
+
+	if err := http.ListenAndServe(":2312", server); err != nil {
+		log.Fatalf("binding port 2312 %v", err)
+	}
 }
