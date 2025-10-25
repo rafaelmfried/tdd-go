@@ -6,3 +6,17 @@ IO e sorting
 Linha de comando e estrutura de pacotes
 Tempo
 Websockets
+
+### Application requirements
+
+# GET /jogadores/{nome}
+
+# POST /jogadores/{nome}
+
+# Ao receber o post devemos icrementar uma vitoria para aquele jogador
+
+# N pode obter jogador sem telo registrado
+
+# E parece ser dificil ver se a chamada do POST funcionou sem o registro do metodo antes
+
+Curiosidade legal: mocking significa zombar, mas usamos para definir classes com valores pre setados em testes
