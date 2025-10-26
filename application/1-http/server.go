@@ -56,11 +56,9 @@ func (f *ArmazenamentoJogadorDoArquivo) ObterPontuacaoJogador(nome string) int {
 
 func (f *ArmazenamentoJogadorDoArquivo) SalvarVitoria(nome string) {
 	liga := f.ObterLiga()
-
-	for i, jogador := range liga {
-		if jogador.Nome == nome {
-			liga[i].Pontos++
-		}
+	jogador := liga.Find(nome)
+	if jogador != nil {
+		jogador.Pontos++
 	}
 
 	f.bancoDeDados.Seek(0, 0)
