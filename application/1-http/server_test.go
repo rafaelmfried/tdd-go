@@ -8,14 +8,16 @@ import (
 	"net/http/httptest"
 	"reflect"
 	"strconv"
+	"strings"
 	. "tdd/application/1-http"
+	liga "tdd/application/1-http/liga"
 	"testing"
 )
 
 type EsbocoArmazenamentoJogador struct {
 	pontuacoes map[string]int
 	registrosVitorias []string
-	liga []Jogador
+	liga []liga.Jogador
 }
 
 func (e *EsbocoArmazenamentoJogador) ObterPontuacaoJogador(nome string) (pontuacao int, err error) {
@@ -30,7 +32,7 @@ func (e *EsbocoArmazenamentoJogador) RegistrarVitoria(nome string) {
 	e.registrosVitorias = append(e.registrosVitorias, nome)
 }
 
-func (e *EsbocoArmazenamentoJogador) ObterLiga() []Jogador  {
+func (e *EsbocoArmazenamentoJogador) ObterLiga() []liga.Jogador  {
 	return e.liga
 }
 
@@ -200,7 +202,7 @@ func TestLiga(t *testing.T) {
 
 		servidor.ServeHTTP(resposta, requisicao)
 
-		var obtido []Jogador
+		var obtido []liga.Jogador
 
 		err := json.NewDecoder(resposta.Body).Decode(&obtido)
 
@@ -212,11 +214,11 @@ func TestLiga(t *testing.T) {
 	})
 
 	t.Run("retorna a liga esperada como json", func(t *testing.T) {
-		ligaEsperada := []Jogador{
-			{"Rafael", 30},
-			{"Vanessa", 40},
-			{"Pedro", 20},
-			{"Marcos", 3},
+		ligaEsperada := []liga.Jogador{
+			{Nome: "Rafael", Pontos: 30},
+			{Nome: "Vanessa", Pontos: 40},
+			{Nome: "Pedro", Pontos: 20},
+			{Nome: "Marcos", Pontos: 3},
 		}
 
 		armazenamento := EsbocoArmazenamentoJogador{
@@ -240,6 +242,27 @@ func TestLiga(t *testing.T) {
 	})
 }
 
+func TestSistemaDeArquivoDeArmazenamentoDoJogador(t *testing.T) {
+	t.Run("liga eh carregada de um leitor", func(t *testing.T) {
+		bancoDeDados := strings.NewReader(`[
+			{"Nome": "Rafael", "Pontos": 10},
+			{"Nome": "Vanessa", "Pontos": 20},
+			{"Nome": "Pedro", "Pontos": 30}
+		]`)
+
+		armazenamento := NovoArmazenamentoJogadorDoArquivo(bancoDeDados)
+
+		recebido := armazenamento.ObterLiga()
+		esperado := []liga.Jogador{
+			{Nome: "Rafael", Pontos: 10},
+			{Nome: "Vanessa", Pontos: 20},
+			{Nome: "Pedro", Pontos: 30},
+		}
+
+		verificaLiga(t, recebido, esperado)
+	})
+}
+
 func verificaContentType(t *testing.T, resposta *httptest.ResponseRecorder, esperado string) {
 	t.Helper()
 	obtido := resposta.Header().Get("content-type")
@@ -248,14 +271,14 @@ func verificaContentType(t *testing.T, resposta *httptest.ResponseRecorder, espe
 	}
 }
 
-func verificaLiga(t *testing.T, obtido, esperado []Jogador) {
+func verificaLiga(t *testing.T, obtido, esperado []liga.Jogador) {
 	t.Helper()
 	if !reflect.DeepEqual(obtido, esperado) {
 		t.Errorf("obtido %v, esperado %v", obtido, esperado)
 	}
 }
 
-func obterLigaDaResposta(t *testing.T, body io.Reader) (liga []Jogador) {
+func obterLigaDaResposta(t *testing.T, body io.Reader) (liga []liga.Jogador) {
 	t.Helper()
 	err := json.NewDecoder(body).Decode(&liga)
 

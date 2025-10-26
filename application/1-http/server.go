@@ -1,20 +1,18 @@
 package server
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
+	liga "tdd/application/1-http/liga"
 )
 
 const JSONContentType = "application/json"
 
-type Jogador struct {
-	Nome  string
-	Pontos int
-}
-
-var jogadores = map[string]Jogador{
+var jogadores = map[string]liga.Jogador{
 	"Rafael":  {Nome: "Rafael", Pontos: 30},
 	"Vanessa": {Nome: "Vanessa", Pontos: 40},
 	"Pedro":   {Nome: "Pedro", Pontos: 20},
@@ -22,16 +20,34 @@ var jogadores = map[string]Jogador{
 
 var vitorias []string
 
-var ErrJogadorNotFound = fmt.Errorf("Jogador n encontrado")
+var ErrJogadorNotFound = fmt.Errorf("jogador n encontrado")
 
 type ArmazenamentoJogador interface {
 	ObterPontuacaoJogador(nome string) (pontuacao int, err error)
 	RegistrarVitoria(nome string)
-	ObterLiga() []Jogador
+	ObterLiga() []liga.Jogador
 }
 
 type ArmazenamentoJogadorInMemory struct {
 	storage map[string]int
+}
+
+type ArmazenamentoJogadorDoArquivo struct {
+	bancoDeDados io.Reader
+}
+
+func NovoArmazenamentoJogadorDoArquivo(bancoDeDados io.Reader) *ArmazenamentoJogadorDoArquivo {
+	return &ArmazenamentoJogadorDoArquivo{bancoDeDados: bancoDeDados}
+}
+
+func (f *ArmazenamentoJogadorDoArquivo) ObterLiga() []liga.Jogador {
+	var ligaJogadores []liga.Jogador
+	decodificador := json.NewDecoder(f.bancoDeDados)
+	err := decodificador.Decode(&ligaJogadores)
+	if err != nil {
+		log.Fatalf("nao foi possivel decodificar o banco de dados %v", err)
+	}
+	return ligaJogadores
 }
 
 func NovoArmazenamentoJogadorInMemory() *ArmazenamentoJogadorInMemory {
@@ -46,7 +62,7 @@ func (a *ArmazenamentoJogadorInMemory) RegistrarVitoria(nome string) {
 	registraVitoria(nome)
 }
 
-func (a *ArmazenamentoJogadorInMemory) ObterLiga() []Jogador {
+func (a *ArmazenamentoJogadorInMemory) ObterLiga() []liga.Jogador {
 	return obterTabelaLiga()
 }
 type ServidorJogador struct {
@@ -108,23 +124,33 @@ func obterPontuacaoJogador(nome string) (pontuacao int, err error) {
 	return 0, ErrJogadorNotFound
 }
 
-func obterTabelaLiga() []Jogador {
-	tabelaLiga := []Jogador{}
+func obterTabelaLiga() []liga.Jogador {
+	reader := MapParaReader(jogadores)
+	liga, _ := liga.NovaLiga(reader)
 
+	return liga
+}
+
+func MapParaReader(jogadores map[string]liga.Jogador) io.Reader {
+	var liga []liga.Jogador
 	for _, jogador := range jogadores {
-		tabelaLiga = append(tabelaLiga, jogador)
+		liga = append(liga, jogador)
 	}
 
-	return tabelaLiga
+	jsonData, err := json.Marshal(liga)
+	if err != nil {
+		log.Fatalf("nao foi possivel converter jogadores para JSON %v", err)
+	}
+	return bytes.NewReader(jsonData)
 }
 
 func registraVitoria(nome string) {
 	vitorias = append(vitorias, nome)
 	if jogador, ok := jogadores[nome]; ok {
-		jogadores[nome] = Jogador{Nome: nome, Pontos: jogador.Pontos + 1}
+		jogadores[nome] = liga.Jogador{Nome: nome, Pontos: jogador.Pontos + 1}
 		return
 	}
-	jogadores[nome] = Jogador{ Nome: nome, Pontos: 1}
+	jogadores[nome] = liga.Jogador{Nome: nome, Pontos: 1}
 }
 
 func Server() {

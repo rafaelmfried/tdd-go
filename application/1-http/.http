@@ -1,3 +1,6 @@
 ### GET JOGADOR
 
 GET http://localhost:2312/jogadores/Rafael
+
+### GET TABELA LIGA
+GET http://localhost:2312/liga

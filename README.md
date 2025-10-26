@@ -32,3 +32,5 @@ Curiosidade legal: mocking significa zombar, mas usamos para definir classes com
 ### Requisito:
 
 Criar endpoint GET /liga que retorna todos os Jogadores
+
+# Agora vamos usar arquivos como a base de dados para salvar
