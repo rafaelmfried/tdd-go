@@ -47,15 +47,11 @@ func (f *ArmazenamentoJogadorDoArquivo) ObterLiga() liga.Liga {
 }
 
 func (f *ArmazenamentoJogadorDoArquivo) ObterPontuacaoJogador(nome string) int {
-	var wins int
-
-	for _, jogador := range f.ObterLiga() {
-		if jogador.Nome == nome {
-			wins = jogador.Pontos
-			break
-		}
+	jogador := f.ObterLiga().Find(nome)
+	if jogador != nil {
+		return jogador.Pontos
 	}
-	return wins
+	return 0
 }
 
 func (f *ArmazenamentoJogadorDoArquivo) SalvarVitoria(nome string) {
