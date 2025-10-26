@@ -1,9 +1,12 @@
 package server_test
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"strconv"
 	. "tdd/application/1-http"
 	"testing"
@@ -12,6 +15,7 @@ import (
 type EsbocoArmazenamentoJogador struct {
 	pontuacoes map[string]int
 	registrosVitorias []string
+	liga []Jogador
 }
 
 func (e *EsbocoArmazenamentoJogador) ObterPontuacaoJogador(nome string) (pontuacao int, err error) {
@@ -24,6 +28,10 @@ func (e *EsbocoArmazenamentoJogador) ObterPontuacaoJogador(nome string) (pontuac
 
 func (e *EsbocoArmazenamentoJogador) RegistrarVitoria(nome string) {
 	e.registrosVitorias = append(e.registrosVitorias, nome)
+}
+
+func (e *EsbocoArmazenamentoJogador) ObterLiga() []Jogador  {
+	return e.liga
 }
 
 func TestObterJogadores(t *testing.T) {
@@ -104,6 +112,7 @@ func verificarStatusCodeRequisicao(t *testing.T, recebido, esperado int) {
 func TestArmazenamentoVitorias(t *testing.T) {
 	armazenamento := EsbocoArmazenamentoJogador{
 		map[string]int{},
+		nil,
 		nil,
 	}
 
@@ -191,8 +200,70 @@ func TestLiga(t *testing.T) {
 
 		servidor.ServeHTTP(resposta, requisicao)
 
+		var obtido []Jogador
+
+		err := json.NewDecoder(resposta.Body).Decode(&obtido)
+
+		if err != nil {
+			t.Fatalf("nao foi possivel decodificar a resposta do servidor %v", err)
+		}
+
 		verificarStatusCodeRequisicao(t, resposta.Code, http.StatusOK)
 	})
+
+	t.Run("retorna a liga esperada como json", func(t *testing.T) {
+		ligaEsperada := []Jogador{
+			{"Rafael", 30},
+			{"Vanessa", 40},
+			{"Pedro", 20},
+			{"Marcos", 3},
+		}
+
+		armazenamento := EsbocoArmazenamentoJogador{
+			liga: ligaEsperada,
+		}
+
+		servidor := NewServidorJogador(&armazenamento)
+
+		requisicao := novaRequisicaoBuscaLiga()
+		resposta := httptest.NewRecorder()
+
+		servidor.ServeHTTP(resposta, requisicao)
+
+		obtido := obterLigaDaResposta(t, resposta.Body)
+
+		verificarStatusCodeRequisicao(t, resposta.Code, http.StatusOK)
+
+		verificaLiga(t, obtido, ligaEsperada)
+
+		verificaContentType(t, resposta, JSONContentType)
+	})
+}
+
+func verificaContentType(t *testing.T, resposta *httptest.ResponseRecorder, esperado string) {
+	t.Helper()
+	obtido := resposta.Header().Get("content-type")
+	if obtido != esperado {
+		t.Errorf("o content type obtido foi %s, esperado %s", obtido, esperado)
+	}
+}
+
+func verificaLiga(t *testing.T, obtido, esperado []Jogador) {
+	t.Helper()
+	if !reflect.DeepEqual(obtido, esperado) {
+		t.Errorf("obtido %v, esperado %v", obtido, esperado)
+	}
+}
+
+func obterLigaDaResposta(t *testing.T, body io.Reader) (liga []Jogador) {
+	t.Helper()
+	err := json.NewDecoder(body).Decode(&liga)
+
+	if err != nil {
+		panic(fmt.Sprintf("nao foi possivel decodificar a resposta do servidor %v", err))
+	}
+
+	return
 }
 
 func novaRequisicaoBuscaLiga() *http.Request {

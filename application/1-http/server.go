@@ -1,10 +1,13 @@
 package server
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 )
+
+const JSONContentType = "application/json"
 
 type Jogador struct {
 	Nome  string
@@ -24,6 +27,7 @@ var ErrJogadorNotFound = fmt.Errorf("Jogador n encontrado")
 type ArmazenamentoJogador interface {
 	ObterPontuacaoJogador(nome string) (pontuacao int, err error)
 	RegistrarVitoria(nome string)
+	ObterLiga() []Jogador
 }
 
 type ArmazenamentoJogadorInMemory struct {
@@ -42,6 +46,9 @@ func (a *ArmazenamentoJogadorInMemory) RegistrarVitoria(nome string) {
 	registraVitoria(nome)
 }
 
+func (a *ArmazenamentoJogadorInMemory) ObterLiga() []Jogador {
+	return obterTabelaLiga()
+}
 type ServidorJogador struct {
 	armazenamento ArmazenamentoJogador
 	http.Handler
@@ -72,6 +79,15 @@ func (s *ServidorJogador) mostrarPontuacao(writer http.ResponseWriter, request h
 	fmt.Fprint(writer, pontuacao)
 }
 
+func (s *ServidorJogador) manipulaLiga(writer http.ResponseWriter, request http.Request) {
+	tabelaLiga := obterTabelaLiga()
+	fmt.Printf("tabela liga: %v", tabelaLiga)
+	writer.Header().Set("content-type", JSONContentType)
+	json.NewEncoder(writer).Encode(tabelaLiga)
+
+	writer.WriteHeader(http.StatusOK)
+}
+
 func (s *ServidorJogador) tratarRequisicaoJogador(writer http.ResponseWriter, request *http.Request) {
 	switch request.Method {
 	case http.MethodPost:
@@ -82,7 +98,7 @@ func (s *ServidorJogador) tratarRequisicaoJogador(writer http.ResponseWriter, re
 }
 
 func (s *ServidorJogador) tratarRequisicaoLiga(writer http.ResponseWriter, request *http.Request) {
-	writer.WriteHeader(http.StatusOK)
+	s.manipulaLiga(writer, *request)
 }
 
 func obterPontuacaoJogador(nome string) (pontuacao int, err error) {
@@ -90,6 +106,16 @@ func obterPontuacaoJogador(nome string) (pontuacao int, err error) {
 		return jogador.Pontos, nil
 	}
 	return 0, ErrJogadorNotFound
+}
+
+func obterTabelaLiga() []Jogador {
+	tabelaLiga := []Jogador{}
+
+	for _, jogador := range jogadores {
+		tabelaLiga = append(tabelaLiga, jogador)
+	}
+
+	return tabelaLiga
 }
 
 func registraVitoria(nome string) {
