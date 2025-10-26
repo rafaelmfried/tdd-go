@@ -6,9 +6,9 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"reflect"
 	"strconv"
-	"strings"
 	. "tdd/application/1-http"
 	liga "tdd/application/1-http/liga"
 	"testing"
@@ -32,7 +32,7 @@ func (e *EsbocoArmazenamentoJogador) RegistrarVitoria(nome string) {
 	e.registrosVitorias = append(e.registrosVitorias, nome)
 }
 
-func (e *EsbocoArmazenamentoJogador) ObterLiga() []liga.Jogador  {
+func (e *EsbocoArmazenamentoJogador) ObterLiga() liga.Liga  {
 	return e.liga
 }
 
@@ -90,25 +90,6 @@ func TestObterJogadores(t *testing.T) {
 			t.Errorf("o resultdo obtido foi %d quando deveria ter sido: %d", status, statusEsperado)
 		}
 	})
-}
-
-func novaRequisicaoObterPontuacao(nome string) *http.Request {
-	requisicao, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/jogadores/%s", nome), nil)
-	return requisicao
-}
-
-func verificarCorpoRequisicao(t *testing.T, recebido, esperado string) {
-	t.Helper()
-	if recebido != esperado {
-		t.Errorf("obtido '%s', esperado '%s'", recebido, esperado)
-	}
-}
-
-func verificarStatusCodeRequisicao(t *testing.T, recebido, esperado int) {
-	t.Helper()
-	if recebido != esperado {
-		t.Errorf("nao recebeu o codigo esperado: %d, recebido: %d", esperado, recebido)
-	}
 }
 
 func TestArmazenamentoVitorias(t *testing.T) {
@@ -187,11 +168,6 @@ func TestArmazenamentoVitorias(t *testing.T) {
 	})
 }
 
-func novaRequisicaoRegistroVitoriaPost(nome string) *http.Request {
-	requisicao, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("/jogadores/%s", nome), nil)
-	return requisicao
-}
-
 func TestLiga(t *testing.T) {
 	armazenamento := EsbocoArmazenamentoJogador{}
 	servidor := NewServidorJogador(&armazenamento)
@@ -244,15 +220,18 @@ func TestLiga(t *testing.T) {
 
 func TestSistemaDeArquivoDeArmazenamentoDoJogador(t *testing.T) {
 	t.Run("liga eh carregada de um leitor", func(t *testing.T) {
-		bancoDeDados := strings.NewReader(`[
+		conteudoArquivo := `[
 			{"Nome": "Rafael", "Pontos": 10},
 			{"Nome": "Vanessa", "Pontos": 20},
 			{"Nome": "Pedro", "Pontos": 30}
-		]`)
+		]`
+		bancoDeDados, limpaBancoDeDados := criarArquivoTemporario(t, conteudoArquivo)
+		defer limpaBancoDeDados()
 
 		armazenamento := NovoArmazenamentoJogadorDoArquivo(bancoDeDados)
 
 		recebido := armazenamento.ObterLiga()
+
 		esperado := []liga.Jogador{
 			{Nome: "Rafael", Pontos: 10},
 			{Nome: "Vanessa", Pontos: 20},
@@ -261,6 +240,105 @@ func TestSistemaDeArquivoDeArmazenamentoDoJogador(t *testing.T) {
 
 		verificaLiga(t, recebido, esperado)
 	})
+
+	t.Run("pegar pontuacao do jogador do arquivo", func(t *testing.T) {
+		conteudoArquivo := `[
+			{"Nome": "Rafael", "Pontos": 10},
+			{"Nome": "Vanessa", "Pontos": 20},
+			{"Nome": "Pedro", "Pontos": 30}
+		]`
+		bancoDeDados, limpaBancoDeDados := criarArquivoTemporario(t, conteudoArquivo)
+		defer limpaBancoDeDados()
+
+		armazenamento := NovoArmazenamentoJogadorDoArquivo(bancoDeDados)
+
+		recebido := armazenamento.ObterPontuacaoJogador("Rafael")
+
+		esperado := 10
+
+		verificaPontuacao(t, recebido, esperado)
+	})
+
+	t.Run("leitor de liga", func (t *testing.T) {
+		conteudoArquivo := `[
+			{"Nome": "Rafael", "Pontos": 10},
+			{"Nome": "Vanessa", "Pontos": 20},
+			{"Nome": "Pedro", "Pontos": 30}
+		]`
+
+		bancoDeDados, removerArquivo := criarArquivoTemporario(t, conteudoArquivo)
+		defer removerArquivo()
+
+		armazenamento := NovoArmazenamentoJogadorDoArquivo(bancoDeDados)
+
+		recebido := armazenamento.ObterLiga()
+
+		esperado := []liga.Jogador{
+			{Nome: "Rafael", Pontos: 10},
+			{Nome: "Vanessa", Pontos: 20},
+			{Nome: "Pedro", Pontos: 30},
+		}
+
+		verificaLiga(t, recebido, esperado)
+
+		recebido = armazenamento.ObterLiga()
+
+		verificaLiga(t, recebido, esperado)
+	})
+
+	t.Run("registra vitoria e persiste no arquivo", func(t *testing.T) {
+		conteudoArquivo := `[
+			{"Nome": "Rafael", "Pontos": 10},
+			{"Nome": "Vanessa", "Pontos": 20},
+			{"Nome": "Pedro", "Pontos": 30}
+		]`
+
+		bancoDeDados, removerArquivo := criarArquivoTemporario(t, conteudoArquivo)
+		defer removerArquivo()
+
+		armazenamento := NovoArmazenamentoJogadorDoArquivo(bancoDeDados)
+
+		armazenamento.SalvarVitoria("Rafael")
+
+		recebido := armazenamento.ObterPontuacaoJogador("Rafael")
+
+		esperado := 11
+
+		verificaPontuacao(t, recebido, esperado)
+	})
+}
+
+// Helpers
+
+// Request helpers
+func novaRequisicaoObterPontuacao(nome string) *http.Request {
+	requisicao, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/jogadores/%s", nome), nil)
+	return requisicao
+}
+
+func novaRequisicaoRegistroVitoriaPost(nome string) *http.Request {
+	requisicao, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("/jogadores/%s", nome), nil)
+	return requisicao
+}
+
+func novaRequisicaoBuscaLiga() *http.Request {
+	requisicao, _ := http.NewRequest(http.MethodGet, "/liga", nil)
+	return requisicao
+}
+
+// Verification helpers
+func verificarCorpoRequisicao(t *testing.T, recebido, esperado string) {
+	t.Helper()
+	if recebido != esperado {
+		t.Errorf("obtido '%s', esperado '%s'", recebido, esperado)
+	}
+}
+
+func verificarStatusCodeRequisicao(t *testing.T, recebido, esperado int) {
+	t.Helper()
+	if recebido != esperado {
+		t.Errorf("nao recebeu o codigo esperado: %d, recebido: %d", esperado, recebido)
+	}
 }
 
 func verificaContentType(t *testing.T, resposta *httptest.ResponseRecorder, esperado string) {
@@ -278,6 +356,15 @@ func verificaLiga(t *testing.T, obtido, esperado []liga.Jogador) {
 	}
 }
 
+func verificaPontuacao(t *testing.T, obtido, esperado int) {
+	t.Helper()
+	if obtido != esperado {
+		t.Errorf("obtido %d, esperado %d", obtido, esperado)
+	}
+}
+
+
+// Others
 func obterLigaDaResposta(t *testing.T, body io.Reader) (liga []liga.Jogador) {
 	t.Helper()
 	err := json.NewDecoder(body).Decode(&liga)
@@ -289,7 +376,20 @@ func obterLigaDaResposta(t *testing.T, body io.Reader) (liga []liga.Jogador) {
 	return
 }
 
-func novaRequisicaoBuscaLiga() *http.Request {
-	requisicao, _ := http.NewRequest(http.MethodGet, "/liga", nil)
-	return requisicao
+func criarArquivoTemporario(t *testing.T, conteudo string) (io.ReadWriteSeeker, func()) {
+	t.Helper()
+
+	arquivotmp, err := os.CreateTemp("", "db")
+	if err != nil {
+		t.Fatalf("nao foi possivel criar um arquivo temporario %v", err)
+	}
+
+	arquivotmp.Write([]byte(conteudo))
+
+	removeArquivo := func() {
+		arquivotmp.Close()
+		os.Remove(arquivotmp.Name())
+	}
+
+	return arquivotmp, removeArquivo
 }

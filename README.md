@@ -34,3 +34,20 @@ Curiosidade legal: mocking significa zombar, mas usamos para definir classes com
 Criar endpoint GET /liga que retorna todos os Jogadores
 
 # Agora vamos usar arquivos como a base de dados para salvar
+
+# Interface do Reader:
+
+type Reader interface {
+Read(p []byte) (n int, err error)
+}
+
+Vemos a interface ReadSeeker que junta a interface Read e a Seeker que te ajuda a ler e percorrer arquivos
+
+type ReadSeeker interface {
+Reader
+Seeker
+}
+
+type Seeker interface {
+Seek(offset int64, whence int) (int64, error)
+}

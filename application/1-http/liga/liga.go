@@ -11,8 +11,10 @@ type Jogador struct {
 	Pontos int
 }
 
-func NovaLiga(reader io.Reader) ([]Jogador, error) {
-	var liga []Jogador
+type Liga []Jogador
+
+func NovaLiga(reader io.Reader) (Liga, error) {
+	var liga Liga
 	err := json.NewDecoder(reader).Decode(&liga)
 
 	if err != nil {
@@ -20,4 +22,13 @@ func NovaLiga(reader io.Reader) ([]Jogador, error) {
 		return nil, err
 	}
 	return liga, nil
+}
+
+func (l Liga) Find(nome string) *Jogador {
+	for i := range l {
+		if l[i].Nome == nome {
+			return &l[i]
+		}
+	}
+	return nil
 }

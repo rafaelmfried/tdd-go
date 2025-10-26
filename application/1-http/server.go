@@ -25,7 +25,7 @@ var ErrJogadorNotFound = fmt.Errorf("jogador n encontrado")
 type ArmazenamentoJogador interface {
 	ObterPontuacaoJogador(nome string) (pontuacao int, err error)
 	RegistrarVitoria(nome string)
-	ObterLiga() []liga.Jogador
+	ObterLiga() liga.Liga
 }
 
 type ArmazenamentoJogadorInMemory struct {
@@ -33,21 +33,42 @@ type ArmazenamentoJogadorInMemory struct {
 }
 
 type ArmazenamentoJogadorDoArquivo struct {
-	bancoDeDados io.Reader
+	bancoDeDados io.ReadWriteSeeker
 }
 
-func NovoArmazenamentoJogadorDoArquivo(bancoDeDados io.Reader) *ArmazenamentoJogadorDoArquivo {
+func NovoArmazenamentoJogadorDoArquivo(bancoDeDados io.ReadWriteSeeker) *ArmazenamentoJogadorDoArquivo {
 	return &ArmazenamentoJogadorDoArquivo{bancoDeDados: bancoDeDados}
 }
 
-func (f *ArmazenamentoJogadorDoArquivo) ObterLiga() []liga.Jogador {
-	var ligaJogadores []liga.Jogador
-	decodificador := json.NewDecoder(f.bancoDeDados)
-	err := decodificador.Decode(&ligaJogadores)
-	if err != nil {
-		log.Fatalf("nao foi possivel decodificar o banco de dados %v", err)
+func (f *ArmazenamentoJogadorDoArquivo) ObterLiga() liga.Liga {
+	f.bancoDeDados.Seek(0, 0)
+	liga, _ := liga.NovaLiga(f.bancoDeDados)
+	return liga
+}
+
+func (f *ArmazenamentoJogadorDoArquivo) ObterPontuacaoJogador(nome string) int {
+	var wins int
+
+	for _, jogador := range f.ObterLiga() {
+		if jogador.Nome == nome {
+			wins = jogador.Pontos
+			break
+		}
 	}
-	return ligaJogadores
+	return wins
+}
+
+func (f *ArmazenamentoJogadorDoArquivo) SalvarVitoria(nome string) {
+	liga := f.ObterLiga()
+
+	for i, jogador := range liga {
+		if jogador.Nome == nome {
+			liga[i].Pontos++
+		}
+	}
+
+	f.bancoDeDados.Seek(0, 0)
+	json.NewEncoder(f.bancoDeDados).Encode(liga)
 }
 
 func NovoArmazenamentoJogadorInMemory() *ArmazenamentoJogadorInMemory {
@@ -62,7 +83,7 @@ func (a *ArmazenamentoJogadorInMemory) RegistrarVitoria(nome string) {
 	registraVitoria(nome)
 }
 
-func (a *ArmazenamentoJogadorInMemory) ObterLiga() []liga.Jogador {
+func (a *ArmazenamentoJogadorInMemory) ObterLiga() liga.Liga {
 	return obterTabelaLiga()
 }
 type ServidorJogador struct {
@@ -95,7 +116,7 @@ func (s *ServidorJogador) mostrarPontuacao(writer http.ResponseWriter, request h
 	fmt.Fprint(writer, pontuacao)
 }
 
-func (s *ServidorJogador) manipulaLiga(writer http.ResponseWriter, request http.Request) {
+func (s *ServidorJogador) manipulaLiga(writer http.ResponseWriter, _ http.Request) {
 	tabelaLiga := obterTabelaLiga()
 	fmt.Printf("tabela liga: %v", tabelaLiga)
 	writer.Header().Set("content-type", JSONContentType)
@@ -154,10 +175,10 @@ func registraVitoria(nome string) {
 }
 
 func Server() {
-	armazenamento := &ArmazenamentoJogadorInMemory{}
-	handler := NewServidorJogador(armazenamento)
-	tratador := http.HandlerFunc(handler.ServeHTTP)
-	if err := http.ListenAndServe(":5324", tratador); err != nil {
-		log.Fatalf("nao foi possivel escutar a porta 5324 %v", err)
-	}
+	// armazenamento := &ArmazenamentoJogadorDoArquivo{}
+	// handler := NewServidorJogador(armazenamento)
+	// tratador := http.HandlerFunc(handler.ServeHTTP)
+	// if err := http.ListenAndServe(":5324", tratador); err != nil {
+	// 	log.Fatalf("nao foi possivel escutar a porta 5324 %v", err)
+	// }
 }
