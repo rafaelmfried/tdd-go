@@ -1,3 +1,5 @@
+// Refatorar para testes orientados a tabela (table-driven tests) e helpers de verificação
+
 package server_test
 
 import (
@@ -138,7 +140,9 @@ func TestArmazenamentoVitorias(t *testing.T) {
 	})
 
 	t.Run("registra e busca as vitorias", func(t *testing.T) {
-		armazenamento := NovoArmazenamentoJogadorInMemory()
+		bancoDeDados, limpaBancoDeDados := criarArquivoTemporario(t, "")
+		defer limpaBancoDeDados()
+		armazenamento := NovoArmazenamentoJogadorDoArquivo(bancoDeDados)
 		servidor := NewServidorJogador(armazenamento)
 		// investigar porque a pontuacao inicial esta como 0 para todos jogadores pelo novo armazenamento in memory
 		jogador := "Marcos"
@@ -164,7 +168,21 @@ func TestArmazenamentoVitorias(t *testing.T) {
 		verificarStatusCodeRequisicao(t, resposta.Code, http.StatusOK)
 
 		verificarCorpoRequisicao(t, resposta.Body.String(), strconv.Itoa(pontuacaoEsperada))
+	})
 
+	t.Run("registra vitoria de novos jogadores", func(t *testing.T) {
+		bancoDeDados, limpaBancoDeDados := criarArquivoTemporario(t, "")
+		defer limpaBancoDeDados()
+
+		armazenamento := NovoArmazenamentoJogadorDoArquivo(bancoDeDados)
+
+		armazenamento.RegistrarVitoria("Pepperoni")
+
+		recebido, _ := armazenamento.ObterPontuacaoJogador("Pepperoni")
+
+		esperado := 1
+
+		verificaPontuacao(t, recebido, esperado)
 	})
 }
 
@@ -225,6 +243,7 @@ func TestSistemaDeArquivoDeArmazenamentoDoJogador(t *testing.T) {
 			{"Nome": "Vanessa", "Pontos": 20},
 			{"Nome": "Pedro", "Pontos": 30}
 		]`
+
 		bancoDeDados, limpaBancoDeDados := criarArquivoTemporario(t, conteudoArquivo)
 		defer limpaBancoDeDados()
 
@@ -252,7 +271,7 @@ func TestSistemaDeArquivoDeArmazenamentoDoJogador(t *testing.T) {
 
 		armazenamento := NovoArmazenamentoJogadorDoArquivo(bancoDeDados)
 
-		recebido := armazenamento.ObterPontuacaoJogador("Rafael")
+		recebido, _ := armazenamento.ObterPontuacaoJogador("Rafael")
 
 		esperado := 10
 
@@ -298,9 +317,9 @@ func TestSistemaDeArquivoDeArmazenamentoDoJogador(t *testing.T) {
 
 		armazenamento := NovoArmazenamentoJogadorDoArquivo(bancoDeDados)
 
-		armazenamento.SalvarVitoria("Rafael")
+		armazenamento.RegistrarVitoria("Rafael")
 
-		recebido := armazenamento.ObterPontuacaoJogador("Rafael")
+		recebido, _ := armazenamento.ObterPontuacaoJogador("Rafael")
 
 		esperado := 11
 
@@ -351,6 +370,7 @@ func verificaContentType(t *testing.T, resposta *httptest.ResponseRecorder, espe
 
 func verificaLiga(t *testing.T, obtido, esperado []liga.Jogador) {
 	t.Helper()
+	fmt.Printf("VERIFICANDO LIGA: %v, %v", obtido, esperado)
 	if !reflect.DeepEqual(obtido, esperado) {
 		t.Errorf("obtido %v, esperado %v", obtido, esperado)
 	}

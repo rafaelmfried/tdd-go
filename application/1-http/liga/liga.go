@@ -13,7 +13,7 @@ type Jogador struct {
 
 type Liga []Jogador
 
-func NovaLiga(reader io.Reader) (Liga, error) {
+func NovaLiga(reader io.ReadSeeker) (Liga, error) {
 	var liga Liga
 	err := json.NewDecoder(reader).Decode(&liga)
 

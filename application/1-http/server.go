@@ -7,18 +7,12 @@ import (
 	"io"
 	"log"
 	"net/http"
-	liga "tdd/application/1-http/liga"
+	"tdd/application/1-http/liga"
 )
 
 const JSONContentType = "application/json"
 
-var jogadores = map[string]liga.Jogador{
-	"Rafael":  {Nome: "Rafael", Pontos: 30},
-	"Vanessa": {Nome: "Vanessa", Pontos: 40},
-	"Pedro":   {Nome: "Pedro", Pontos: 20},
-}
-
-var vitorias []string
+type Jogador = liga.Jogador
 
 var ErrJogadorNotFound = fmt.Errorf("jogador n encontrado")
 
@@ -27,58 +21,51 @@ type ArmazenamentoJogador interface {
 	RegistrarVitoria(nome string)
 	ObterLiga() liga.Liga
 }
-
-type ArmazenamentoJogadorInMemory struct {
-	storage map[string]int
-}
-
 type ArmazenamentoJogadorDoArquivo struct {
 	bancoDeDados io.ReadWriteSeeker
+	liga liga.Liga
 }
 
 func NovoArmazenamentoJogadorDoArquivo(bancoDeDados io.ReadWriteSeeker) *ArmazenamentoJogadorDoArquivo {
-	return &ArmazenamentoJogadorDoArquivo{bancoDeDados: bancoDeDados}
+	liga, _ := liga.NovaLiga(bancoDeDados)
+	return &ArmazenamentoJogadorDoArquivo{bancoDeDados: bancoDeDados, liga: liga}
 }
 
 func (f *ArmazenamentoJogadorDoArquivo) ObterLiga() liga.Liga {
-	f.bancoDeDados.Seek(0, 0)
+	f.bancoDeDados.Seek(0, 0) // Reset posição do cursor
+	ligaAtual, _ := liga.NovaLiga(f.bancoDeDados)
+	return ligaAtual
+}
+
+func (f *ArmazenamentoJogadorDoArquivo) ObterPontuacaoJogador(nome string) (int, error) {
+	f.bancoDeDados.Seek(0, 0) // Reset posição do cursor
 	liga, _ := liga.NovaLiga(f.bancoDeDados)
-	return liga
-}
-
-func (f *ArmazenamentoJogadorDoArquivo) ObterPontuacaoJogador(nome string) int {
-	jogador := f.ObterLiga().Find(nome)
-	if jogador != nil {
-		return jogador.Pontos
-	}
-	return 0
-}
-
-func (f *ArmazenamentoJogadorDoArquivo) SalvarVitoria(nome string) {
-	liga := f.ObterLiga()
 	jogador := liga.Find(nome)
+	fmt.Printf("JOGADOR: %v", jogador)
 	if jogador != nil {
+		fmt.Printf("PONTOS: %d", jogador.Pontos)
+		return jogador.Pontos, nil
+	}
+	return 0, ErrJogadorNotFound
+}
+
+func (f *ArmazenamentoJogadorDoArquivo) RegistrarVitoria(nome string) {
+	// Nao estamos fazeno isso corretamente ainda
+	f.bancoDeDados.Seek(0, 0) // Reset posição do cursor
+	ligaAtual, _ := liga.NovaLiga(f.bancoDeDados)
+	jogador := ligaAtual.Find(nome)
+	fmt.Printf("SALVANDO JOGADOR: %v", jogador)
+	if jogador != nil {
+		fmt.Printf("SALVANDO JOGADOR EXISTE: %d", jogador.Pontos)
 		jogador.Pontos++
+		f.liga = ligaAtual
+	} else {
+		f.liga = append(ligaAtual, liga.Jogador{Nome: nome, Pontos: 1})
+		fmt.Printf("SALVANDO JOGADOR N EXISTE: %v", f.liga)
 	}
 
 	f.bancoDeDados.Seek(0, 0)
-	json.NewEncoder(f.bancoDeDados).Encode(liga)
-}
-
-func NovoArmazenamentoJogadorInMemory() *ArmazenamentoJogadorInMemory {
-	return &ArmazenamentoJogadorInMemory{map[string]int{}}
-}
-
-func (a *ArmazenamentoJogadorInMemory) ObterPontuacaoJogador(nome string) (pontuacao int, err error) {
-	return obterPontuacaoJogador(nome)
-}
-
-func (a *ArmazenamentoJogadorInMemory) RegistrarVitoria(nome string) {
-	registraVitoria(nome)
-}
-
-func (a *ArmazenamentoJogadorInMemory) ObterLiga() liga.Liga {
-	return obterTabelaLiga()
+	json.NewEncoder(f.bancoDeDados).Encode(f.liga)
 }
 type ServidorJogador struct {
 	armazenamento ArmazenamentoJogador
@@ -111,7 +98,7 @@ func (s *ServidorJogador) mostrarPontuacao(writer http.ResponseWriter, request h
 }
 
 func (s *ServidorJogador) manipulaLiga(writer http.ResponseWriter, _ http.Request) {
-	tabelaLiga := obterTabelaLiga()
+	tabelaLiga := s.armazenamento.ObterLiga()
 	fmt.Printf("tabela liga: %v", tabelaLiga)
 	writer.Header().Set("content-type", JSONContentType)
 	json.NewEncoder(writer).Encode(tabelaLiga)
@@ -132,22 +119,8 @@ func (s *ServidorJogador) tratarRequisicaoLiga(writer http.ResponseWriter, reque
 	s.manipulaLiga(writer, *request)
 }
 
-func obterPontuacaoJogador(nome string) (pontuacao int, err error) {
-	if jogador, ok := jogadores[nome]; ok {
-		return jogador.Pontos, nil
-	}
-	return 0, ErrJogadorNotFound
-}
-
-func obterTabelaLiga() []liga.Jogador {
-	reader := MapParaReader(jogadores)
-	liga, _ := liga.NovaLiga(reader)
-
-	return liga
-}
-
-func MapParaReader(jogadores map[string]liga.Jogador) io.Reader {
-	var liga []liga.Jogador
+func MapParaReader(jogadores map[string]Jogador) io.ReadSeeker {
+	var liga []Jogador
 	for _, jogador := range jogadores {
 		liga = append(liga, jogador)
 	}
@@ -157,15 +130,6 @@ func MapParaReader(jogadores map[string]liga.Jogador) io.Reader {
 		log.Fatalf("nao foi possivel converter jogadores para JSON %v", err)
 	}
 	return bytes.NewReader(jsonData)
-}
-
-func registraVitoria(nome string) {
-	vitorias = append(vitorias, nome)
-	if jogador, ok := jogadores[nome]; ok {
-		jogadores[nome] = liga.Jogador{Nome: nome, Pontos: jogador.Pontos + 1}
-		return
-	}
-	jogadores[nome] = liga.Jogador{Nome: nome, Pontos: 1}
 }
 
 func Server() {
