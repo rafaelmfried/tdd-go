@@ -1,11 +1,8 @@
 package server
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
-	"log"
 	"net/http"
 	"os"
 	"sort"
@@ -145,24 +142,5 @@ func (s *ServidorJogador) tratarRequisicaoLiga(writer http.ResponseWriter, reque
 	s.manipulaLiga(writer, *request)
 }
 
-func MapParaReader(jogadores map[string]Jogador) io.ReadSeeker {
-	var liga []Jogador
-	for _, jogador := range jogadores {
-		liga = append(liga, jogador)
-	}
-
-	jsonData, err := json.Marshal(liga)
-	if err != nil {
-		log.Fatalf("nao foi possivel converter jogadores para JSON %v", err)
-	}
-	return bytes.NewReader(jsonData)
-}
-
 func Server() {
-	// armazenamento := &ArmazenamentoJogadorDoArquivo{}
-	// handler := NewServidorJogador(armazenamento)
-	// tratador := http.HandlerFunc(handler.ServeHTTP)
-	// if err := http.ListenAndServe(":5324", tratador); err != nil {
-	// 	log.Fatalf("nao foi possivel escutar a porta 5324 %v", err)
-	// }
 }

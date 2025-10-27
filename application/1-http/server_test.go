@@ -1,5 +1,4 @@
 // Refatorar para testes orientados a tabela (table-driven tests) e helpers de verificação
-
 package server_test
 
 import (
