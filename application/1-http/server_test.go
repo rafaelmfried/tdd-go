@@ -140,9 +140,12 @@ func TestArmazenamentoVitorias(t *testing.T) {
 	})
 
 	t.Run("registra e busca as vitorias", func(t *testing.T) {
-		bancoDeDados, limpaBancoDeDados := criarArquivoTemporario(t, "")
+		bancoDeDados, limpaBancoDeDados := criarArquivoTemporario(t, "[]")
 		defer limpaBancoDeDados()
-		armazenamento := NovoArmazenamentoJogadorDoArquivo(bancoDeDados)
+		armazenamento, err := NovoArmazenamentoJogadorDoArquivo(bancoDeDados)
+		if err != nil {
+			t.Fatalf("nao foi possivel criar o armazenamento do jogador a partir do arquivo: %v", err)
+		}
 		servidor := NewServidorJogador(armazenamento)
 		// investigar porque a pontuacao inicial esta como 0 para todos jogadores pelo novo armazenamento in memory
 		jogador := "Marcos"
@@ -171,10 +174,10 @@ func TestArmazenamentoVitorias(t *testing.T) {
 	})
 
 	t.Run("registra vitoria de novos jogadores", func(t *testing.T) {
-		bancoDeDados, limpaBancoDeDados := criarArquivoTemporario(t, "")
+		bancoDeDados, limpaBancoDeDados := criarArquivoTemporario(t, "[]")
 		defer limpaBancoDeDados()
 
-		armazenamento := NovoArmazenamentoJogadorDoArquivo(bancoDeDados)
+		armazenamento, _ := NovoArmazenamentoJogadorDoArquivo(bancoDeDados)
 
 		armazenamento.RegistrarVitoria("Pepperoni")
 
@@ -247,7 +250,7 @@ func TestSistemaDeArquivoDeArmazenamentoDoJogador(t *testing.T) {
 		bancoDeDados, limpaBancoDeDados := criarArquivoTemporario(t, conteudoArquivo)
 		defer limpaBancoDeDados()
 
-		armazenamento := NovoArmazenamentoJogadorDoArquivo(bancoDeDados)
+		armazenamento, _ := NovoArmazenamentoJogadorDoArquivo(bancoDeDados)
 
 		recebido := armazenamento.ObterLiga()
 
@@ -269,7 +272,7 @@ func TestSistemaDeArquivoDeArmazenamentoDoJogador(t *testing.T) {
 		bancoDeDados, limpaBancoDeDados := criarArquivoTemporario(t, conteudoArquivo)
 		defer limpaBancoDeDados()
 
-		armazenamento := NovoArmazenamentoJogadorDoArquivo(bancoDeDados)
+		armazenamento, _ := NovoArmazenamentoJogadorDoArquivo(bancoDeDados)
 
 		recebido, _ := armazenamento.ObterPontuacaoJogador("Rafael")
 
@@ -288,7 +291,7 @@ func TestSistemaDeArquivoDeArmazenamentoDoJogador(t *testing.T) {
 		bancoDeDados, removerArquivo := criarArquivoTemporario(t, conteudoArquivo)
 		defer removerArquivo()
 
-		armazenamento := NovoArmazenamentoJogadorDoArquivo(bancoDeDados)
+		armazenamento, _ := NovoArmazenamentoJogadorDoArquivo(bancoDeDados)
 
 		recebido := armazenamento.ObterLiga()
 
@@ -315,7 +318,7 @@ func TestSistemaDeArquivoDeArmazenamentoDoJogador(t *testing.T) {
 		bancoDeDados, removerArquivo := criarArquivoTemporario(t, conteudoArquivo)
 		defer removerArquivo()
 
-		armazenamento := NovoArmazenamentoJogadorDoArquivo(bancoDeDados)
+		armazenamento, _ := NovoArmazenamentoJogadorDoArquivo(bancoDeDados)
 
 		armazenamento.RegistrarVitoria("Rafael")
 
@@ -345,6 +348,14 @@ func TestFitaEscrever(t *testing.T) {
 		if obtido != esperado {
 			t.Errorf("obtido '%s', esperado '%s'", obtido, esperado)
 		}
+	})
+
+	t.Run("funciona com um arquivo vazio", func(t *testing.T) {
+		arquivo, limpa := criarArquivoTemporario(t, "")
+		defer limpa()
+
+		_, err := NovoArmazenamentoJogadorDoArquivo(arquivo)
+		defineSemErro(t, err)
 	})
 }
 // Helpers
@@ -420,11 +431,15 @@ func criarArquivoTemporario(t *testing.T, conteudo string) (*os.File, func()) {
 	t.Helper()
 
 	arquivotmp, err := os.CreateTemp("", "db")
+
+	
 	if err != nil {
 		t.Fatalf("nao foi possivel criar um arquivo temporario %v", err)
 	}
-
+	
 	arquivotmp.Write([]byte(conteudo))
+
+	arquivotmp.Seek(0, 0)
 
 	removeArquivo := func() {
 		arquivotmp.Close()
@@ -432,4 +447,11 @@ func criarArquivoTemporario(t *testing.T, conteudo string) (*os.File, func()) {
 	}
 
 	return arquivotmp, removeArquivo
+}
+
+func defineSemErro(t *testing.T, err error) {
+    t.Helper()
+    if err != nil {
+        t.Fatalf("não esperava um erro mas obteve um, %v", err)
+    }
 }

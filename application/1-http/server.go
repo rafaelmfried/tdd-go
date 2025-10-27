@@ -27,14 +27,29 @@ type ArmazenamentoJogadorDoArquivo struct {
 	liga liga.Liga
 }
 
-func NovoArmazenamentoJogadorDoArquivo(arquivo *os.File) *ArmazenamentoJogadorDoArquivo {
+func NovoArmazenamentoJogadorDoArquivo(arquivo *os.File) (*ArmazenamentoJogadorDoArquivo, error) {
 	arquivo.Seek(0, 0)
-	liga, _ := liga.NovaLiga(arquivo)
+
+	info, err := arquivo.Stat()
+	if err != nil {
+		return nil, fmt.Errorf("nao foi possivel obter info do arquivo %s %v", arquivo.Name(), err)
+	}
+
+	if info.Size() == 0 {
+		arquivo.Write([]byte("[]"))
+		arquivo.Seek(0, 0)
+	}
+
+	liga, err := liga.NovaLiga(arquivo)
+
+	if err != nil {
+		return nil, fmt.Errorf("nao foi possivel criar a liga a partir do arquivo %v", err)
+	}
 	fita := NewFita(arquivo)
 	return &ArmazenamentoJogadorDoArquivo{
 		bancoDeDados: json.NewEncoder(fita),
 		liga: liga,
-	}
+	}, nil
 }
 
 func (f *ArmazenamentoJogadorDoArquivo) ObterLiga() liga.Liga {
