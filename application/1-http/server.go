@@ -22,25 +22,26 @@ type ArmazenamentoJogador interface {
 	ObterLiga() liga.Liga
 }
 type ArmazenamentoJogadorDoArquivo struct {
-	bancoDeDados io.ReadWriteSeeker
+	bancoDeDados io.Writer
 	liga liga.Liga
 }
 
 func NovoArmazenamentoJogadorDoArquivo(bancoDeDados io.ReadWriteSeeker) *ArmazenamentoJogadorDoArquivo {
+	bancoDeDados.Seek(0, 0)
 	liga, _ := liga.NovaLiga(bancoDeDados)
-	return &ArmazenamentoJogadorDoArquivo{bancoDeDados: bancoDeDados, liga: liga}
+	return &ArmazenamentoJogadorDoArquivo{
+		bancoDeDados: &fita{arquivo: bancoDeDados},
+		liga: liga,
+	}
 }
 
 func (f *ArmazenamentoJogadorDoArquivo) ObterLiga() liga.Liga {
-	f.bancoDeDados.Seek(0, 0) // Reset posição do cursor
-	ligaAtual, _ := liga.NovaLiga(f.bancoDeDados)
-	return ligaAtual
+	return f.liga
 }
 
 func (f *ArmazenamentoJogadorDoArquivo) ObterPontuacaoJogador(nome string) (int, error) {
-	f.bancoDeDados.Seek(0, 0) // Reset posição do cursor
-	liga, _ := liga.NovaLiga(f.bancoDeDados)
-	jogador := liga.Find(nome)
+	jogador := f.liga.Find(nome)
+
 	fmt.Printf("JOGADOR: %v", jogador)
 	if jogador != nil {
 		fmt.Printf("PONTOS: %d", jogador.Pontos)
@@ -50,21 +51,15 @@ func (f *ArmazenamentoJogadorDoArquivo) ObterPontuacaoJogador(nome string) (int,
 }
 
 func (f *ArmazenamentoJogadorDoArquivo) RegistrarVitoria(nome string) {
-	// Nao estamos fazeno isso corretamente ainda
-	f.bancoDeDados.Seek(0, 0) // Reset posição do cursor
-	ligaAtual, _ := liga.NovaLiga(f.bancoDeDados)
-	jogador := ligaAtual.Find(nome)
+	jogador := f.liga.Find(nome)
 	fmt.Printf("SALVANDO JOGADOR: %v", jogador)
 	if jogador != nil {
 		fmt.Printf("SALVANDO JOGADOR EXISTE: %d", jogador.Pontos)
 		jogador.Pontos++
-		f.liga = ligaAtual
 	} else {
-		f.liga = append(ligaAtual, liga.Jogador{Nome: nome, Pontos: 1})
+		f.liga = append(f.liga, liga.Jogador{Nome: nome, Pontos: 1})
 		fmt.Printf("SALVANDO JOGADOR N EXISTE: %v", f.liga)
 	}
-
-	f.bancoDeDados.Seek(0, 0)
 	json.NewEncoder(f.bancoDeDados).Encode(f.liga)
 }
 type ServidorJogador struct {
