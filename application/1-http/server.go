@@ -27,17 +27,27 @@ type ArmazenamentoJogadorDoArquivo struct {
 	liga liga.Liga
 }
 
-func NovoArmazenamentoJogadorDoArquivo(arquivo *os.File) (*ArmazenamentoJogadorDoArquivo, error) {
+func iniciaArquivoDBJogador(arquivo *os.File) error {
 	arquivo.Seek(0, 0)
 
 	info, err := arquivo.Stat()
+
 	if err != nil {
-		return nil, fmt.Errorf("nao foi possivel obter info do arquivo %s %v", arquivo.Name(), err)
+		return fmt.Errorf("nao foi possivel obter info do arquivo %s %v", arquivo.Name(), err)
 	}
 
 	if info.Size() == 0 {
 		arquivo.Write([]byte("[]"))
 		arquivo.Seek(0, 0)
+	}
+	return nil
+}
+
+func NovoArmazenamentoJogadorDoArquivo(arquivo *os.File) (*ArmazenamentoJogadorDoArquivo, error) {
+	err := iniciaArquivoDBJogador(arquivo)
+	
+	if err != nil {
+		return nil, fmt.Errorf("nao foi possivel iniciar o arquivo %s %v", arquivo.Name(), err)
 	}
 
 	liga, err := liga.NovaLiga(arquivo)
