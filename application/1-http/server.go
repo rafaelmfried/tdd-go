@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sort"
 	"tdd/application/1-http/liga"
 )
 
@@ -63,6 +64,9 @@ func NovoArmazenamentoJogadorDoArquivo(arquivo *os.File) (*ArmazenamentoJogadorD
 }
 
 func (f *ArmazenamentoJogadorDoArquivo) ObterLiga() liga.Liga {
+	sort.Slice(f.liga, func(i, j int) bool {
+		return f.liga[i].Pontos > f.liga[j].Pontos
+	})
 	return f.liga
 }
 

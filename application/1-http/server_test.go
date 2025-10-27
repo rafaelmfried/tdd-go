@@ -237,6 +237,34 @@ func TestLiga(t *testing.T) {
 
 		verificaContentType(t, resposta, JSONContentType)
 	})
+
+	t.Run("liga eh retornada em ordem decrescente", func(t *testing.T) {
+		ligaString := `[
+			{"Nome": "Rafael", "Pontos": 30},
+			{"Nome": "Vanessa", "Pontos": 40},
+			{"Nome": "Pedro", "Pontos": 20},
+			{"Nome": "Marcos", "Pontos": 3}]`
+
+		bancoDeDados, limpaBancoDeDados := criarArquivoTemporario(t, ligaString)
+
+		defer limpaBancoDeDados()
+
+		armazenamento, _ := NovoArmazenamentoJogadorDoArquivo(bancoDeDados)
+
+		recebido := armazenamento.ObterLiga()
+
+		ligaEsperada := []liga.Jogador{
+			{Nome: "Vanessa", Pontos: 40},
+			{Nome: "Rafael", Pontos: 30},
+			{Nome: "Pedro", Pontos: 20},
+			{Nome: "Marcos", Pontos: 3},
+		}
+
+		verificaLiga(t, recebido, ligaEsperada)
+		recebido = armazenamento.ObterLiga()
+
+		verificaLiga(t, recebido, ligaEsperada)
+	})
 }
 
 func TestSistemaDeArquivoDeArmazenamentoDoJogador(t *testing.T) {
@@ -255,9 +283,9 @@ func TestSistemaDeArquivoDeArmazenamentoDoJogador(t *testing.T) {
 		recebido := armazenamento.ObterLiga()
 
 		esperado := []liga.Jogador{
-			{Nome: "Rafael", Pontos: 10},
-			{Nome: "Vanessa", Pontos: 20},
 			{Nome: "Pedro", Pontos: 30},
+			{Nome: "Vanessa", Pontos: 20},
+			{Nome: "Rafael", Pontos: 10},
 		}
 
 		verificaLiga(t, recebido, esperado)
@@ -296,9 +324,9 @@ func TestSistemaDeArquivoDeArmazenamentoDoJogador(t *testing.T) {
 		recebido := armazenamento.ObterLiga()
 
 		esperado := []liga.Jogador{
-			{Nome: "Rafael", Pontos: 10},
-			{Nome: "Vanessa", Pontos: 20},
 			{Nome: "Pedro", Pontos: 30},
+			{Nome: "Vanessa", Pontos: 20},
+			{Nome: "Rafael", Pontos: 10},
 		}
 
 		verificaLiga(t, recebido, esperado)
