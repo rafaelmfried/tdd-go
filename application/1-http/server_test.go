@@ -327,6 +327,26 @@ func TestSistemaDeArquivoDeArmazenamentoDoJogador(t *testing.T) {
 	})
 }
 
+func TestFitaEscrever(t *testing.T) {
+	t.Run("escreve no arquivo a partir do inicio", func(t *testing.T) {
+		arquivo, limpa := criarArquivoTemporario(t, "ola mundo")
+		defer limpa()
+
+		fita := NewFita(arquivo)
+
+		fita.Write([]byte("ola"))
+
+		arquivo.Seek(0, 0)
+		conteudo, _ := io.ReadAll(arquivo)
+
+		esperado := "ola mundo"
+		obtido := string(conteudo)
+
+		if obtido != esperado {
+			t.Errorf("obtido '%s', esperado '%s'", obtido, esperado)
+		}
+	})
+}
 // Helpers
 
 // Request helpers
@@ -396,7 +416,7 @@ func obterLigaDaResposta(t *testing.T, body io.Reader) (liga []liga.Jogador) {
 	return
 }
 
-func criarArquivoTemporario(t *testing.T, conteudo string) (io.ReadWriteSeeker, func()) {
+func criarArquivoTemporario(t *testing.T, conteudo string) (*os.File, func()) {
 	t.Helper()
 
 	arquivotmp, err := os.CreateTemp("", "db")

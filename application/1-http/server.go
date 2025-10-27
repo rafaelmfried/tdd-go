@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"tdd/application/1-http/liga"
 )
 
@@ -22,15 +23,16 @@ type ArmazenamentoJogador interface {
 	ObterLiga() liga.Liga
 }
 type ArmazenamentoJogadorDoArquivo struct {
-	bancoDeDados io.Writer
+	bancoDeDados *json.Encoder
 	liga liga.Liga
 }
 
-func NovoArmazenamentoJogadorDoArquivo(bancoDeDados io.ReadWriteSeeker) *ArmazenamentoJogadorDoArquivo {
-	bancoDeDados.Seek(0, 0)
-	liga, _ := liga.NovaLiga(bancoDeDados)
+func NovoArmazenamentoJogadorDoArquivo(arquivo *os.File) *ArmazenamentoJogadorDoArquivo {
+	arquivo.Seek(0, 0)
+	liga, _ := liga.NovaLiga(arquivo)
+	fita := NewFita(arquivo)
 	return &ArmazenamentoJogadorDoArquivo{
-		bancoDeDados: &fita{arquivo: bancoDeDados},
+		bancoDeDados: json.NewEncoder(fita),
 		liga: liga,
 	}
 }
@@ -60,7 +62,7 @@ func (f *ArmazenamentoJogadorDoArquivo) RegistrarVitoria(nome string) {
 		f.liga = append(f.liga, liga.Jogador{Nome: nome, Pontos: 1})
 		fmt.Printf("SALVANDO JOGADOR N EXISTE: %v", f.liga)
 	}
-	json.NewEncoder(f.bancoDeDados).Encode(f.liga)
+	f.bancoDeDados.Encode(f.liga)
 }
 type ServidorJogador struct {
 	armazenamento ArmazenamentoJogador
