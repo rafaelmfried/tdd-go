@@ -1,17 +1,13 @@
-package server
+package armazenamento
 
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"os"
 	"sort"
-	"tdd/application/1-http/liga"
+	"tdd/application/1-http/linha-de-comando/liga"
+	"tdd/application/1-http/linha-de-comando/tape"
 )
-
-const JSONContentType = "application/json"
-
-type Jogador = liga.Jogador
 
 var ErrJogadorNotFound = fmt.Errorf("jogador n encontrado")
 
@@ -53,7 +49,7 @@ func NovoArmazenamentoJogadorDoArquivo(arquivo *os.File) (*ArmazenamentoJogadorD
 	if err != nil {
 		return nil, fmt.Errorf("nao foi possivel criar a liga a partir do arquivo %v", err)
 	}
-	fita := NewFita(arquivo)
+	fita := tape.NewFita(arquivo)
 	return &ArmazenamentoJogadorDoArquivo{
 		bancoDeDados: json.NewEncoder(fita),
 		liga: liga,
@@ -89,58 +85,4 @@ func (f *ArmazenamentoJogadorDoArquivo) RegistrarVitoria(nome string) {
 		fmt.Printf("SALVANDO JOGADOR N EXISTE: %v", f.liga)
 	}
 	f.bancoDeDados.Encode(f.liga)
-}
-type ServidorJogador struct {
-	armazenamento ArmazenamentoJogador
-	http.Handler
-}
-
-func NewServidorJogador(armazenamento ArmazenamentoJogador) *ServidorJogador {
-	s := new(ServidorJogador)
-	s.armazenamento = armazenamento
-	roteador := http.NewServeMux()
-	roteador.Handle("/jogadores/", http.HandlerFunc(s.tratarRequisicaoJogador))
-	roteador.Handle("/liga", http.HandlerFunc(s.tratarRequisicaoLiga))
-	s.Handler = roteador
-	return s
-}
-
-func (s *ServidorJogador) registrarVitoria(writer http.ResponseWriter, request *http.Request) {
-	jogador := request.URL.Path[len("/jogadores/"):]
-	s.armazenamento.RegistrarVitoria(jogador)
-	writer.WriteHeader(http.StatusAccepted)
-} 
-
-func (s *ServidorJogador) mostrarPontuacao(writer http.ResponseWriter, request http.Request) {
-	jogador := request.URL.Path[len("/jogadores/"):]
-	pontuacao, err := s.armazenamento.ObterPontuacaoJogador(jogador)
-	if err == ErrJogadorNotFound {
-		writer.WriteHeader(http.StatusNotFound)
-	}
-	fmt.Fprint(writer, pontuacao)
-}
-
-func (s *ServidorJogador) manipulaLiga(writer http.ResponseWriter, _ http.Request) {
-	tabelaLiga := s.armazenamento.ObterLiga()
-	fmt.Printf("tabela liga: %v", tabelaLiga)
-	writer.Header().Set("content-type", JSONContentType)
-	json.NewEncoder(writer).Encode(tabelaLiga)
-
-	writer.WriteHeader(http.StatusOK)
-}
-
-func (s *ServidorJogador) tratarRequisicaoJogador(writer http.ResponseWriter, request *http.Request) {
-	switch request.Method {
-	case http.MethodPost:
-		s.registrarVitoria(writer, request)
-	case http.MethodGet:
-		s.mostrarPontuacao(writer, *request)
-	}
-}
-
-func (s *ServidorJogador) tratarRequisicaoLiga(writer http.ResponseWriter, request *http.Request) {
-	s.manipulaLiga(writer, *request)
-}
-
-func Server() {
 }

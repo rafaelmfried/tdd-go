@@ -1,6 +1,10 @@
 ### GET JOGADOR
 
-GET http://localhost:2312/jogadores/Rafael
+GET http://localhost:3212/jogadores/Rafael
 
 ### GET TABELA LIGA
-GET http://localhost:2312/liga
+GET http://localhost:3212/liga
+
+
+### REGISTRAR VITORIA
+POST http://localhost:3212/jogadores/Rafael
