@@ -9,7 +9,6 @@ import (
 	storage "tdd/application/1-http/linha-de-comando/armazenamento"
 	"tdd/application/1-http/linha-de-comando/helpers"
 	liga "tdd/application/1-http/linha-de-comando/liga"
-	"tdd/application/1-http/linha-de-comando/servidor"
 	. "tdd/application/1-http/linha-de-comando/servidor"
 	"testing"
 )
@@ -43,7 +42,7 @@ func TestArmazenamentoVitorias(t *testing.T) {
 		nil,
 	}
 
-	server := servidor.NewServidorJogador(&armazenamento)
+	server := NewServidorJogador(&armazenamento)
 
 	t.Run("retorna status aceito para chamadas ao metodo POST", func(t *testing.T) {
 		requisicao := helpers.NovaRequisicaoRegistroVitoriaPost("Rafael")
@@ -88,7 +87,7 @@ func TestArmazenamentoVitorias(t *testing.T) {
 		if err != nil {
 			t.Fatalf("nao foi possivel criar o armazenamento do jogador a partir do arquivo: %v", err)
 		}
-		servidor := servidor.NewServidorJogador(armazenamento)
+		servidor := NewServidorJogador(armazenamento)
 		// investigar porque a pontuacao inicial esta como 0 para todos jogadores pelo novo armazenamento in memory
 		jogador := "Marcos"
 
