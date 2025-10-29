@@ -66,7 +66,6 @@ func (f *ArmazenamentoJogadorDoArquivo) ObterLiga() liga.Liga {
 func (f *ArmazenamentoJogadorDoArquivo) ObterPontuacaoJogador(nome string) (int, error) {
 	jogador := f.liga.Find(nome)
 
-	fmt.Printf("JOGADOR: %v", jogador)
 	if jogador != nil {
 		fmt.Printf("PONTOS: %d", jogador.Pontos)
 		return jogador.Pontos, nil
@@ -76,13 +75,10 @@ func (f *ArmazenamentoJogadorDoArquivo) ObterPontuacaoJogador(nome string) (int,
 
 func (f *ArmazenamentoJogadorDoArquivo) RegistrarVitoria(nome string) {
 	jogador := f.liga.Find(nome)
-	fmt.Printf("SALVANDO JOGADOR: %v", jogador)
 	if jogador != nil {
-		fmt.Printf("SALVANDO JOGADOR EXISTE: %d", jogador.Pontos)
 		jogador.Pontos++
 	} else {
 		f.liga = append(f.liga, liga.Jogador{Nome: nome, Pontos: 1})
-		fmt.Printf("SALVANDO JOGADOR N EXISTE: %v", f.liga)
 	}
 	f.bancoDeDados.Encode(f.liga)
 }

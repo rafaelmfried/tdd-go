@@ -9,6 +9,8 @@ import (
 	"time"
 )
 
+const PlayerPrompt = "Please enter the number of players: "
+
 // SpyBlindAlerter para testes
 type SpyBlindAlerter struct{}
 
@@ -18,38 +20,82 @@ func (s *SpyBlindAlerter) ScheduleAlertAt(duration time.Duration, amount int) {
 
 func TestCLI(t *testing.T) {
 	t.Run("testa chamada de vitorias pela linha de comando", func(t *testing.T) {
-		in := strings.NewReader("Chris venceu\n")
 		stdout := &bytes.Buffer{}
-		armazenamentoJogado := &helpers.EsbocoArmazenamentoJogador{}
-		dummyBlindAlerter := &SpyBlindAlerter{}
-		cli := cli.NovoCLI(armazenamentoJogado, in, stdout, dummyBlindAlerter)
+		in := strings.NewReader("5\n")
+		game := &helpers.GameSpy{}
+		cli := cli.NovoCLI(in, stdout, game)
 
 		cli.JogarPoquer()
 
-		verificaVitoriaJogador(t, armazenamentoJogado, "Chris")
+		game.Start(5)
+
+		gotPrompt := stdout.String()
+		wantPrompt := PlayerPrompt
+
+		game.Finish("Chris")
+		
+		if gotPrompt != wantPrompt {
+			t.Errorf("esperava prompt '%s', mas obteve '%s'", wantPrompt, gotPrompt)
+		}
+
+		if game.StartCalledWith != 5 {
+			t.Errorf("esperava que o jogo fosse iniciado com 5 jogadores, mas foi iniciado com %d", game.StartCalledWith)
+		}
+
+
+		verificaVitoriaJogador(t, game, "Chris")
 	})
 
 	t.Run("recorda vencedor cleo digitado pelo usuario", func(t *testing.T) {
-		in := strings.NewReader("Cleo venceu\n")
 		stdout := &bytes.Buffer{}
-		armazenamentoJogado := &helpers.EsbocoArmazenamentoJogador{}
-		dummyBlindAlerter := &SpyBlindAlerter{}
-		cli := cli.NovoCLI(armazenamentoJogado, in, stdout, dummyBlindAlerter)
+		in := strings.NewReader("5\n")
+		game := &helpers.GameSpy{}
 
+		cli := cli.NovoCLI(in, stdout, game)
 		cli.JogarPoquer()
 
-		verificaVitoriaJogador(t, armazenamentoJogado, "Cleo")
+		gotPrompt := stdout.String()
+		wantPrompt := PlayerPrompt
+
+		game.Finish("Cleo")
+		
+		if gotPrompt != wantPrompt {
+			t.Errorf("esperava prompt '%s', mas obteve '%s'", wantPrompt, gotPrompt)
+		}
+
+		if game.StartCalledWith != 5 {
+			t.Errorf("esperava que o jogo fosse iniciado com 5 jogadores, mas foi iniciado com %d", game.StartCalledWith)
+		}
+		
+		verificaVitoriaJogador(t, game, "Cleo")
 	})
+
+	t.Run("it prompts the user to enter the number of players and starts the game", func(t *testing.T) {
+		stdout := &bytes.Buffer{}
+		in := strings.NewReader("7\n")
+		game := &helpers.GameSpy{}
+
+		cli := cli.NovoCLI(in, stdout, game)
+		cli.JogarPoquer()
+
+		gotPrompt := stdout.String()
+		wantPrompt := PlayerPrompt
+
+		if gotPrompt != wantPrompt {
+				t.Errorf("got '%s', want '%s'", gotPrompt, wantPrompt)
+		}
+
+		if game.StartCalledWith != 7 {
+				t.Errorf("wanted Start called with 7 but got %d", game.StartCalledWith)
+		}
+})
+
 }
 
-func verificaVitoriaJogador(t *testing.T, armazenamento *helpers.EsbocoArmazenamentoJogador, vencedor string) {
+func verificaVitoriaJogador(t *testing.T, game *helpers.GameSpy, vencedor string) {
     t.Helper()
 
-    if len(armazenamento.RegistrosVitorias) != 1 {
-        t.Fatalf("recebi %d chamadas de GravarVitoria esperava %d", len(armazenamento.RegistrosVitorias), 1)
-    }
-
-    if armazenamento.RegistrosVitorias[0] != vencedor {
-        t.Errorf("nao armazenou o vencedor correto, recebi '%s' esperava '%s'", armazenamento.RegistrosVitorias[0], vencedor)
+    if game.FinishedWith != vencedor {
+        t.Errorf("nao armazenou o vencedor correto, recebi '%s' esperava '%s'", game.FinishedWith, vencedor)
     }
 }

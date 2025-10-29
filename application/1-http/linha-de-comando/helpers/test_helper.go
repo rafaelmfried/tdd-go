@@ -13,6 +13,19 @@ import (
 	"testing"
 )
 
+type GameSpy struct {
+		StartCalledWith  int
+		FinishedWith     string
+}
+
+func (g *GameSpy) Start(numberOfPlayers int) {
+    g.StartCalledWith = numberOfPlayers
+}
+
+func (g *GameSpy) Finish(winner string) {
+    g.FinishedWith = winner
+}
+
 type EsbocoArmazenamentoJogador struct {
 	Pontuacoes map[string]int
 	RegistrosVitorias []string
@@ -78,7 +91,6 @@ func VerificaContentType(t *testing.T, resposta *httptest.ResponseRecorder, espe
 
 func VerificaLiga(t *testing.T, obtido, esperado liga.Liga) {
 	t.Helper()
-	fmt.Printf("VERIFICANDO LIGA: %v, %v", obtido, esperado)
 	if !reflect.DeepEqual(obtido, esperado) {
 		t.Errorf("obtido %v, esperado %v", obtido, esperado)
 	}
