@@ -1,6 +1,7 @@
 package poker_test
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 	"tdd/application/1-http/linha-de-comando/cli"
@@ -28,10 +29,11 @@ func (s *SpyBlindAlerter) ScheduleAlertAt(duration time.Duration, amount int) {
 func TestPoker(t *testing.T) {
 	t.Run("deve agendar a impressao dos valores dos blinds para 5 jogadores", func(t *testing.T) {
 		in := strings.NewReader("Rafael venceu\n")
+		stdout := &bytes.Buffer{}
 		armazenamento := &helpers.EsbocoArmazenamentoJogador{}
 		dummySpyAlerter := &SpyBlindAlerter{}
-		
-		cli := cli.NovoCLI(armazenamento, in, dummySpyAlerter)
+
+		cli := cli.NovoCLI(armazenamento, in, stdout, dummySpyAlerter)
 		cli.JogarPoquer()
 
 		cases := []scheduledAlert{
@@ -59,6 +61,26 @@ func TestPoker(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run("deve pedir o numero de jogadores", func(t *testing.T) {
+		stdout := &bytes.Buffer{}
+		cli := cli.NovoCLI(
+			&helpers.EsbocoArmazenamentoJogador{},
+			&bytes.Buffer{},
+			stdout,
+			&SpyBlindAlerter{},
+		)
+
+		cli.JogarPoquer()
+
+		got := stdout.String()
+		want := "Please enter the number of players: "
+
+		if got != want {
+			t.Errorf("esperava '%s', mas recebeu '%s'", want, got)
+		}
+	})
+
 }
 
 func assertScheduledAlert(t *testing.T, got, want scheduledAlert) {

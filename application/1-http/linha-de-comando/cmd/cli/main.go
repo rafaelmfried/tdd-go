@@ -25,6 +25,6 @@ func main() {
 		log.Fatalf("Erro ao criar o armazenamento do jogador: %v", err)
 	}
 
-	cli := cli.NovoCLI(armazenamento, os.Stdin, poker.BlindAlerterFunc(poker.StdOutAlerter))
+	cli := cli.NovoCLI(armazenamento, os.Stdin, nil, poker.BlindAlerterFunc(poker.StdOutAlerter))
 	cli.JogarPoquer()
 }

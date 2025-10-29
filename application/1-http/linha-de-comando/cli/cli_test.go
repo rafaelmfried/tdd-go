@@ -1,17 +1,28 @@
 package cli_test
 
 import (
+	"bytes"
 	"strings"
 	"tdd/application/1-http/linha-de-comando/cli"
 	"tdd/application/1-http/linha-de-comando/helpers"
 	"testing"
+	"time"
 )
+
+// SpyBlindAlerter para testes
+type SpyBlindAlerter struct{}
+
+func (s *SpyBlindAlerter) ScheduleAlertAt(duration time.Duration, amount int) {
+	// Implementação vazia para o teste
+}
 
 func TestCLI(t *testing.T) {
 	t.Run("testa chamada de vitorias pela linha de comando", func(t *testing.T) {
 		in := strings.NewReader("Chris venceu\n")
+		stdout := &bytes.Buffer{}
 		armazenamentoJogado := &helpers.EsbocoArmazenamentoJogador{}
-		cli := cli.NovoCLI(armazenamentoJogado, in, nil)
+		dummyBlindAlerter := &SpyBlindAlerter{}
+		cli := cli.NovoCLI(armazenamentoJogado, in, stdout, dummyBlindAlerter)
 
 		cli.JogarPoquer()
 
@@ -20,8 +31,10 @@ func TestCLI(t *testing.T) {
 
 	t.Run("recorda vencedor cleo digitado pelo usuario", func(t *testing.T) {
 		in := strings.NewReader("Cleo venceu\n")
+		stdout := &bytes.Buffer{}
 		armazenamentoJogado := &helpers.EsbocoArmazenamentoJogador{}
-		cli := cli.NovoCLI(armazenamentoJogado, in, nil)
+		dummyBlindAlerter := &SpyBlindAlerter{}
+		cli := cli.NovoCLI(armazenamentoJogado, in, stdout, dummyBlindAlerter)
 
 		cli.JogarPoquer()
 
