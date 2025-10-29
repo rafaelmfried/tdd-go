@@ -17,10 +17,7 @@ func TestPoker(t *testing.T) {
 		cli := cli.NovoCLI(armazenamento, in, dummySpyAlerter)
 		cli.JogarPoquer()
 
-		cases := []struct{
-			expectedScheduleTime time.Duration
-			expectedAmount int
-		}{
+		cases := []scheduledAlert{
 			{0 * time.Second, 100},
 			{10 * time.Minute, 200},
 			{20 * time.Minute, 300},
@@ -34,24 +31,26 @@ func TestPoker(t *testing.T) {
 			{100 * time.Minute, 8000},
 		}
 
-		for i, c := range cases {
-			t.Run(fmt.Sprintf("%d scheduled for %v", c.expectedAmount, c.expectedScheduleTime), func(t *testing.T) {
+		for i, want := range cases {
+			t.Run(fmt.Sprintf("%d scheduled for %v", want.amount, want.at), func(t *testing.T) {
 				if len(dummySpyAlerter.alerts) <= i {
-					t.Fatalf("alerta %d nao agendado", i)
+					t.Fatalf("alerta %d nao agendado %v", i, dummySpyAlerter.alerts)
 				}
 
-				alert := dummySpyAlerter.alerts[i]
-
-				amountGot := alert.amount
-				if amountGot != c.expectedAmount {
-					t.Errorf("esperava o valor do alerta %d ser %d, mas recebeu %d", i, c.expectedAmount, amountGot)
-				}
-
-				scheduledTimeGot := alert.scheduleAt
-				if scheduledTimeGot != c.expectedScheduleTime {
-					t.Errorf("esperava o tempo agendado do alerta %d ser %v, mas recebeu %v", i, c.expectedScheduleTime, scheduledTimeGot)
-				}
+				got := dummySpyAlerter.alerts[i]
+				assertScheduledAlert(t, got, want)
 			})
 		}
 	})
+}
+
+func assertScheduledAlert(t *testing.T, got, want scheduledAlert) {
+	t.Helper()
+	if got.amount != want.amount {
+		t.Errorf("esperava o valor do alerta ser %d, mas recebeu %d", want.amount, got.amount)
+	}
+
+	if got.at != want.at {
+		t.Errorf("esperava o tempo agendado do alerta ser %v, mas recebeu %v", want.at, got.at)
+	}
 }
