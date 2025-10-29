@@ -5,20 +5,17 @@ import (
 	"io"
 	"strings"
 	"tdd/application/1-http/linha-de-comando/armazenamento"
+	"tdd/application/1-http/linha-de-comando/poker"
 	"time"
 )
-
-type BlindAlerter interface {
-	ScheduleAlertAt(duration time.Duration, amount int)
-}
 
 type CLI struct {
 	armazenamento armazenamento.ArmazenamentoJogador
 	in io.Reader
-	blindAlerter BlindAlerter
+	blindAlerter poker.BlindAlerter
 }
 
-func NovoCLI(armazenamento armazenamento.ArmazenamentoJogador, in io.Reader, blindAlerter BlindAlerter) *CLI {
+func NovoCLI(armazenamento armazenamento.ArmazenamentoJogador, in io.Reader, blindAlerter poker.BlindAlerter) *CLI {
 	return &CLI{
 		armazenamento: armazenamento,
 		in:           in,

@@ -6,6 +6,7 @@ import (
 	"os"
 	"tdd/application/1-http/linha-de-comando/armazenamento"
 	"tdd/application/1-http/linha-de-comando/cli"
+	"tdd/application/1-http/linha-de-comando/poker"
 )
 
 const fileName = "jogo.db.json"
@@ -24,6 +25,6 @@ func main() {
 		log.Fatalf("Erro ao criar o armazenamento do jogador: %v", err)
 	}
 
-	cli := cli.NovoCLI(armazenamento, os.Stdin)
+	cli := cli.NovoCLI(armazenamento, os.Stdin, poker.BlindAlerterFunc(poker.StdOutAlerter))
 	cli.JogarPoquer()
 }

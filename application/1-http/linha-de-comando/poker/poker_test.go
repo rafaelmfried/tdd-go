@@ -1,4 +1,4 @@
-package poker
+package poker_test
 
 import (
 	"fmt"
@@ -8,6 +8,23 @@ import (
 	"testing"
 	"time"
 )
+
+type scheduledAlert struct {
+	at time.Duration
+	amount int
+}
+
+func (s *scheduledAlert) String() string {
+	return fmt.Sprintf("%d chips at %v", s.amount, s.at)
+}
+
+type SpyBlindAlerter struct {
+	alerts []scheduledAlert
+}
+
+func (s *SpyBlindAlerter) ScheduleAlertAt(duration time.Duration, amount int) {
+	s.alerts = append(s.alerts, scheduledAlert{duration, amount})
+}
 func TestPoker(t *testing.T) {
 	t.Run("deve agendar a impressao dos valores dos blinds para 5 jogadores", func(t *testing.T) {
 		in := strings.NewReader("Rafael venceu\n")
