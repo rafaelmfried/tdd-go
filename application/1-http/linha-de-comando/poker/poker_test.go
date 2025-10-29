@@ -10,6 +10,8 @@ import (
 	"time"
 )
 
+const PlayerPrompt = cli.PlayerPrompt
+
 type scheduledAlert struct {
 	at time.Duration
 	amount int
@@ -53,10 +55,11 @@ func TestPoker(t *testing.T) {
 	})
 
 	t.Run("deve pedir o numero de jogadores", func(t *testing.T) {
+		in := helpers.UserSends("5", "Rafael venceu")
 		stdout := &bytes.Buffer{}
 		game := poker.NewGame(&SpyBlindAlerter{}, &helpers.EsbocoArmazenamentoJogador{})
 		cli := cli.NovoCLI(
-			&bytes.Buffer{},
+			in,
 			stdout,
 			game,
 		)
@@ -64,7 +67,7 @@ func TestPoker(t *testing.T) {
 		cli.JogarPoquer()
 
 		got := stdout.String()
-		want := "Please enter the number of players: "
+		want := PlayerPrompt
 
 		if got != want {
 			t.Errorf("esperava '%s', mas recebeu '%s'", want, got)

@@ -19,8 +19,9 @@ import (
 	"time"
 )
 
-const PlayerPrompt = "Please enter the number of players: "
-const BadPlayerInputErrMsg = "Bad value received for number of players, please try again with a number"
+const PlayerPrompt = cli.PlayerPrompt
+const BadPlayerInputErrMsg = cli.BadPlayerInputErrMsg
+const BadWinnerInputErrMsg = cli.BadWinnerInputErrMsg
 
 // SpyBlindAlerter para testes
 type SpyBlindAlerter struct{}
@@ -32,17 +33,13 @@ func (s *SpyBlindAlerter) ScheduleAlertAt(duration time.Duration, amount int) {
 func TestCLI(t *testing.T) {
 	t.Run("testa chamada de vitorias pela linha de comando", func(t *testing.T) {
 		stdout := &bytes.Buffer{}
-		in := helpers.UserSends("5", "Chris wins")
+		in := helpers.UserSends("5", "Chris venceu")
 		game := helpers.NovoGameSpy()
 		cli := cli.NovoCLI(in, stdout, game)
 
 		cli.JogarPoquer()
 
-		game.Start(5)
-
 		wantPrompt := PlayerPrompt
-
-		game.Finish("Chris")
 		
 		assertMessagesSentToUser(t, stdout, wantPrompt)
 		assertGameStartedWith(t, game, 5)
@@ -51,15 +48,13 @@ func TestCLI(t *testing.T) {
 
 	t.Run("recorda vencedor cleo digitado pelo usuario", func(t *testing.T) {
 		stdout := &bytes.Buffer{}
-		in := helpers.UserSends("5", "Cleo wins")
+		in := helpers.UserSends("5", "Cleo venceu")
 		game := helpers.NovoGameSpy()
 
 		cli := cli.NovoCLI(in, stdout, game)
 		cli.JogarPoquer()
 
 		wantPrompt := PlayerPrompt
-
-		game.Finish("Cleo")
 		
 		assertMessagesSentToUser(t, stdout, wantPrompt)
 		assertGameStartedWith(t, game, 5)
@@ -68,7 +63,7 @@ func TestCLI(t *testing.T) {
 
 	t.Run("it prompts the user to enter the number of players and starts the game", func(t *testing.T) {
 		stdout := &bytes.Buffer{}
-		in := helpers.UserSends("7", "Ruth wins")
+		in := helpers.UserSends("7", "Ruth venceu")
 		game := helpers.NovoGameSpy()
 
 		cli := cli.NovoCLI(in, stdout, game)
@@ -93,7 +88,7 @@ func TestCLI(t *testing.T) {
 
 	t.Run("deve retornar uma mensagem de erro caso usuario coloque um valor n valido para quantidade de jogadores", func(t *testing.T) {
 		stdout := &bytes.Buffer{}
-		in := helpers.UserSends("you're so silly")
+		in := helpers.UserSends("Pies", "Ruth venceu")
 		game := helpers.NovoGameSpy()
 
 		cli := cli.NovoCLI(in, stdout, game)
@@ -101,6 +96,21 @@ func TestCLI(t *testing.T) {
 		cli.JogarPoquer()
 
 		wantPrompt := PlayerPrompt + BadPlayerInputErrMsg
+
+		assertMessagesSentToUser(t, stdout, wantPrompt)
+		assertGameNotStarted(t, game)
+	})
+
+	t.Run("deve retornar uma mensagem de erro caso o usuario n coloque o sufixo venceu depois do nome do vencedor", func(t *testing.T) {
+		stdout := &bytes.Buffer{}
+		in := helpers.UserSends("5", "Cleo killer")
+		game := helpers.NovoGameSpy()
+
+		cli := cli.NovoCLI(in, stdout, game)
+
+		cli.JogarPoquer()
+
+		wantPrompt := PlayerPrompt + BadWinnerInputErrMsg
 
 		assertMessagesSentToUser(t, stdout, wantPrompt)
 	})

@@ -44,11 +44,7 @@ type EsbocoArmazenamentoJogador struct {
 }
 
 func UserSends(inputs ...string) io.Reader {
-	var in strings.Builder
-	for _, input := range inputs {
-		in.WriteString(input + "\n")
-	}
-	return strings.NewReader(in.String())
+    return strings.NewReader(strings.Join(inputs, "\n") + "\n")
 }
 
 var ErrJogadorNotFound = armazenamento.ErrJogadorNotFound

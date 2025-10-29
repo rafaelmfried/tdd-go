@@ -67,7 +67,6 @@ func (f *ArmazenamentoJogadorDoArquivo) ObterPontuacaoJogador(nome string) (int,
 	jogador := f.liga.Find(nome)
 
 	if jogador != nil {
-		fmt.Printf("PONTOS: %d", jogador.Pontos)
 		return jogador.Pontos, nil
 	}
 	return 0, ErrJogadorNotFound

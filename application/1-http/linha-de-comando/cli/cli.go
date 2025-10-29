@@ -2,6 +2,7 @@ package cli
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"strconv"
@@ -10,7 +11,12 @@ import (
 )
 
 const PlayerPrompt = "Please enter the number of players: "
-const BadPlayerInputErrMsg = "Bad value received for number of players, please try again with a number"
+
+const BadPlayerInputErrMsg = "bad value received for number of players, please try again with a number"
+var ErrBadPlayerInput = errors.New(BadPlayerInputErrMsg)
+
+const BadWinnerInputErrMsg = "bad value received for winner, please try again with format 'Name venceu'"
+var ErrBadWinnerInput = errors.New(BadWinnerInputErrMsg)
 
 type CLI struct {
 	in *bufio.Reader
@@ -30,26 +36,37 @@ func (c *CLI) JogarPoquer() {
 	fmt.Fprint(c.out, PlayerPrompt)
 
 	numberOfPlayersInput := c.readLine()
-	numberOfPlayers, err := strconv.Atoi(strings.Trim(numberOfPlayersInput, "\n"))
+	numberOfPlayers, err := strconv.Atoi(numberOfPlayersInput)
 	if err != nil {
-		fmt.Fprint(c.out, BadPlayerInputErrMsg)
+		fmt.Fprint(c.out, ErrBadPlayerInput)
 		return
 	}
 	
 	c.game.Start(numberOfPlayers)
 	
 	winnerInput := c.readLine()
-	vencedor := extrairVencedor(winnerInput)
+	vencedor, err := extrairVencedor(winnerInput)
+	if err != nil {
+		fmt.Fprint(c.out, err)
+		return
+	}
 
 	c.game.Finish(vencedor)
 }
 
-func extrairVencedor(input string) string {
-	return strings.Replace(input, " venceu", "", 1)
+func extrairVencedor(input string) (string, error) {
+	if !validatedWinnerInput(input) {
+		return "", ErrBadWinnerInput
+	}
+	return strings.Replace(input, " venceu", "", 1), nil
+}
+
+func validatedWinnerInput(input string) bool {
+	return strings.Contains(input, " venceu")
 }
 
 func (c *CLI) readLine() string {
-	scanner := bufio.NewScanner(c.in)
-	scanner.Scan()
-	return scanner.Text()
+    reader := bufio.NewReader(c.in)
+    line, _ := reader.ReadString('\n')
+    return strings.TrimSpace(line)
 }
