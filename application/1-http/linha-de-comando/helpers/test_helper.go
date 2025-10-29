@@ -8,9 +8,34 @@ import (
 	"net/http/httptest"
 	"os"
 	"reflect"
+	"tdd/application/1-http/linha-de-comando/armazenamento"
 	"tdd/application/1-http/linha-de-comando/liga"
 	"testing"
 )
+
+type EsbocoArmazenamentoJogador struct {
+	Pontuacoes map[string]int
+	RegistrosVitorias []string
+	Liga liga.Liga
+}
+
+var ErrJogadorNotFound = armazenamento.ErrJogadorNotFound
+
+func (e *EsbocoArmazenamentoJogador) ObterPontuacaoJogador(nome string) (pontuacao int, err error) {
+	pontuacao = e.Pontuacoes[nome]
+	if pontuacao == 0 {
+		return 0, ErrJogadorNotFound
+	}
+	return pontuacao, nil
+}
+
+func (e *EsbocoArmazenamentoJogador) RegistrarVitoria(nome string) {
+	e.RegistrosVitorias = append(e.RegistrosVitorias, nome)
+}
+
+func (e *EsbocoArmazenamentoJogador) ObterLiga() liga.Liga  {
+	return e.Liga
+}
 
 // Request helpers
 func NovaRequisicaoObterPontuacao(nome string) *http.Request {

@@ -13,33 +13,11 @@ import (
 	"testing"
 )
 
-type EsbocoArmazenamentoJogador struct {
-	pontuacoes map[string]int
-	registrosVitorias []string
-	liga liga.Liga
-}
-
-func (e *EsbocoArmazenamentoJogador) ObterPontuacaoJogador(nome string) (pontuacao int, err error) {
-	pontuacao = e.pontuacoes[nome]
-	if pontuacao == 0 {
-		return 0, ErrJogadorNotFound
-	}
-	return pontuacao, nil
-}
-
-func (e *EsbocoArmazenamentoJogador) RegistrarVitoria(nome string) {
-	e.registrosVitorias = append(e.registrosVitorias, nome)
-}
-
-func (e *EsbocoArmazenamentoJogador) ObterLiga() liga.Liga  {
-	return e.liga
-}
-
 func TestArmazenamentoVitorias(t *testing.T) {
-	armazenamento := EsbocoArmazenamentoJogador{
-		map[string]int{},
-		nil,
-		nil,
+	armazenamento := helpers.EsbocoArmazenamentoJogador{
+		Pontuacoes:      map[string]int{},
+		RegistrosVitorias: nil,
+		Liga:           liga.Liga{},
 	}
 
 	server := NewServidorJogador(&armazenamento)
@@ -52,7 +30,7 @@ func TestArmazenamentoVitorias(t *testing.T) {
 
 		helpers.VerificarStatusCodeRequisicao(t, resposta.Code, http.StatusAccepted)
 		chamadasEsperadas := 1
-		chamadasObtidas := len(armazenamento.registrosVitorias)
+		chamadasObtidas := len(armazenamento.RegistrosVitorias)
 		if (chamadasObtidas != chamadasEsperadas) {
 			t.Errorf("eram esperadas %d chamadas e obtivemos %d", chamadasEsperadas, chamadasObtidas)
 		}
@@ -67,13 +45,13 @@ func TestArmazenamentoVitorias(t *testing.T) {
 		server.ServeHTTP(resposta, requisicao)
 
 		chamadasEsperadas := 2
-		chamadasObtidas := len(armazenamento.registrosVitorias)
+		chamadasObtidas := len(armazenamento.RegistrosVitorias)
 
 		if chamadasObtidas != chamadasEsperadas {
 			t.Errorf("eram esperadas %d chamadas e obtivemos %d", chamadasEsperadas, chamadasObtidas)
 		}
 
-		jogadorRecebido := armazenamento.registrosVitorias[chamadasEsperadas - 1]
+		jogadorRecebido := armazenamento.RegistrosVitorias[chamadasEsperadas - 1]
 
 		if jogadorRecebido != jogador {
 			t.Errorf("nao registrou o vencedor corretamente, recebemos %s, esperava %s", jogadorRecebido, jogador)
@@ -132,13 +110,13 @@ func TestArmazenamentoVitorias(t *testing.T) {
 
 
 func TestObterJogadores(t *testing.T) {
-	storage := EsbocoArmazenamentoJogador{
-		pontuacoes: map[string]int{
+	storage := helpers.EsbocoArmazenamentoJogador{
+		Pontuacoes: map[string]int{
 			"Rafael": 20,
 			"Vanessa": 15,
 			"Pedro": 10,
 		},
-		registrosVitorias: []string{},
+		RegistrosVitorias: []string{},
 	}
 
 	server := NewServidorJogador(&storage)
@@ -188,7 +166,7 @@ func TestObterJogadores(t *testing.T) {
 }
 
 func TestLiga(t *testing.T) {
-	s := EsbocoArmazenamentoJogador{}
+	s := helpers.EsbocoArmazenamentoJogador{}
 	servidor := NewServidorJogador(&s)
 
 	t.Run("retorna 200 em liga", func(t *testing.T) {
@@ -216,8 +194,8 @@ func TestLiga(t *testing.T) {
 			{Nome: "Marcos", Pontos: 3},
 		}
 
-		armazenamento := EsbocoArmazenamentoJogador{
-			liga: ligaEsperada,
+		armazenamento := helpers.EsbocoArmazenamentoJogador{
+			Liga: ligaEsperada,
 		}
 
 		servidor := NewServidorJogador(&armazenamento)

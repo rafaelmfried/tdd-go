@@ -51,3 +51,13 @@ Seeker
 type Seeker interface {
 Seek(offset int64, whence int) (int64, error)
 }
+
+# Temos agora uma nova funcionalidade que sera a contrucao do seguinte fluxo:
+
+> Entrada do numero de jogadores
+> A entrada sera usada para calcular o intervalo entre as dobras de bets ->
+> {
+> n = (playerQtd \* 1) + 5
+> }
+> n sera representado em minutos e quando o tempo chegar a bet dobra comecando em 100 fichas
+> O sistema deve avisar a cada iteracao
