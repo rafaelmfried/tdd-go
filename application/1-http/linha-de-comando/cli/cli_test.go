@@ -22,7 +22,7 @@ func TestCLI(t *testing.T) {
 	t.Run("testa chamada de vitorias pela linha de comando", func(t *testing.T) {
 		stdout := &bytes.Buffer{}
 		in := strings.NewReader("5\n")
-		game := &helpers.GameSpy{}
+		game := helpers.NovoGameSpy()
 		cli := cli.NovoCLI(in, stdout, game)
 
 		cli.JogarPoquer()
@@ -49,7 +49,7 @@ func TestCLI(t *testing.T) {
 	t.Run("recorda vencedor cleo digitado pelo usuario", func(t *testing.T) {
 		stdout := &bytes.Buffer{}
 		in := strings.NewReader("5\n")
-		game := &helpers.GameSpy{}
+		game := helpers.NovoGameSpy()
 
 		cli := cli.NovoCLI(in, stdout, game)
 		cli.JogarPoquer()
@@ -73,7 +73,7 @@ func TestCLI(t *testing.T) {
 	t.Run("it prompts the user to enter the number of players and starts the game", func(t *testing.T) {
 		stdout := &bytes.Buffer{}
 		in := strings.NewReader("7\n")
-		game := &helpers.GameSpy{}
+		game := helpers.NovoGameSpy()
 
 		cli := cli.NovoCLI(in, stdout, game)
 		cli.JogarPoquer()
@@ -93,7 +93,7 @@ func TestCLI(t *testing.T) {
 	t.Run("deve retornar um um erro caso usuario coloque um valor n valido para quantidade de jogadores", func(t *testing.T) {
 		stdout := &bytes.Buffer{}
 		in := strings.NewReader("Pies\n")
-		game := &helpers.GameSpy{}
+		game := helpers.NovoGameSpy()
 
 		cli := cli.NovoCLI(in, stdout, game)
 

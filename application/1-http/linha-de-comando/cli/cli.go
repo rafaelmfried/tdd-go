@@ -29,13 +29,17 @@ func (c *CLI) JogarPoquer() {
 	fmt.Fprint(c.out, PlayerPrompt)
 
 	numberOfPlayersInput := c.readLine()
-	numberOfPlayers, _ := strconv.Atoi(strings.Trim(numberOfPlayersInput, "\n"))
+	numberOfPlayers, err := strconv.Atoi(strings.Trim(numberOfPlayersInput, "\n"))
+	if err != nil {
+		fmt.Fprintf(c.out, "entrada invalida para numero de jogadores '%s'\n", numberOfPlayersInput)
+		return
+	}
 	
 	c.game.Start(numberOfPlayers)
 	
 	winnerInput := c.readLine()
 	vencedor := extrairVencedor(winnerInput)
-	
+
 	c.game.Finish(vencedor)
 }
 
