@@ -10,6 +10,7 @@ import (
 )
 
 const PlayerPrompt = "Please enter the number of players: "
+const BadPlayerInputErrMsg = "Bad value received for number of players, please try again with a number"
 
 // SpyBlindAlerter para testes
 type SpyBlindAlerter struct{}
@@ -101,6 +102,24 @@ func TestCLI(t *testing.T) {
 
 		if game.StartCalled {
 			t.Errorf("game should not have started")
+		}
+	})
+
+	t.Run("deve retornar uma mensagem de erro caso usuario coloque um valor n valido para quantidade de jogadores", func(t *testing.T) {
+		stdout := &bytes.Buffer{}
+		in := strings.NewReader("you're so silly\n")
+		game := helpers.NovoGameSpy()
+
+		cli := cli.NovoCLI(in, stdout, game)
+
+		cli.JogarPoquer()
+
+		gotPrompt := stdout.String()
+
+		wantPrompt := PlayerPrompt + BadPlayerInputErrMsg
+
+		if gotPrompt != wantPrompt {
+				t.Errorf("got '%s', want '%s'", gotPrompt, wantPrompt)
 		}
 	})
 
