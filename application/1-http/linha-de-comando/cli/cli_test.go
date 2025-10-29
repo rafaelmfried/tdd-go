@@ -1,3 +1,13 @@
+/*
+        assertMessagesSentToUser(t, stdout, poker.PlayerPrompt, poker.BadPlayerInputErrMsg) OK
+        assertGameNotStarted(t, game) OK
+        assertFinishCalledWith(t, game, "Cleo") OK
+        assertGameStartedWith(t, game, 8) OK
+        in := userSends("3", "Chris wins")
+
+				+ cases: What happens if instead of putting Ruth wins the user puts in Lloyd is a killer ?
+*/
+
 package cli_test
 
 import (
@@ -22,7 +32,7 @@ func (s *SpyBlindAlerter) ScheduleAlertAt(duration time.Duration, amount int) {
 func TestCLI(t *testing.T) {
 	t.Run("testa chamada de vitorias pela linha de comando", func(t *testing.T) {
 		stdout := &bytes.Buffer{}
-		in := strings.NewReader("5\n")
+		in := helpers.UserSends("5", "Chris wins")
 		game := helpers.NovoGameSpy()
 		cli := cli.NovoCLI(in, stdout, game)
 
@@ -30,105 +40,106 @@ func TestCLI(t *testing.T) {
 
 		game.Start(5)
 
-		gotPrompt := stdout.String()
 		wantPrompt := PlayerPrompt
 
 		game.Finish("Chris")
 		
-		if gotPrompt != wantPrompt {
-			t.Errorf("esperava prompt '%s', mas obteve '%s'", wantPrompt, gotPrompt)
-		}
-
-		if game.StartCalledWith != 5 {
-			t.Errorf("esperava que o jogo fosse iniciado com 5 jogadores, mas foi iniciado com %d", game.StartCalledWith)
-		}
-
-
+		assertMessagesSentToUser(t, stdout, wantPrompt)
+		assertGameStartedWith(t, game, 5)
 		verificaVitoriaJogador(t, game, "Chris")
 	})
 
 	t.Run("recorda vencedor cleo digitado pelo usuario", func(t *testing.T) {
 		stdout := &bytes.Buffer{}
-		in := strings.NewReader("5\n")
+		in := helpers.UserSends("5", "Cleo wins")
 		game := helpers.NovoGameSpy()
 
 		cli := cli.NovoCLI(in, stdout, game)
 		cli.JogarPoquer()
 
-		gotPrompt := stdout.String()
 		wantPrompt := PlayerPrompt
 
 		game.Finish("Cleo")
 		
-		if gotPrompt != wantPrompt {
-			t.Errorf("esperava prompt '%s', mas obteve '%s'", wantPrompt, gotPrompt)
-		}
-
-		if game.StartCalledWith != 5 {
-			t.Errorf("esperava que o jogo fosse iniciado com 5 jogadores, mas foi iniciado com %d", game.StartCalledWith)
-		}
-		
-		verificaVitoriaJogador(t, game, "Cleo")
+		assertMessagesSentToUser(t, stdout, wantPrompt)
+		assertGameStartedWith(t, game, 5)
+		assertFinishCalledWith(t, game, "Cleo")
 	})
 
 	t.Run("it prompts the user to enter the number of players and starts the game", func(t *testing.T) {
 		stdout := &bytes.Buffer{}
-		in := strings.NewReader("7\n")
+		in := helpers.UserSends("7", "Ruth wins")
 		game := helpers.NovoGameSpy()
 
 		cli := cli.NovoCLI(in, stdout, game)
 		cli.JogarPoquer()
 
-		gotPrompt := stdout.String()
 		wantPrompt := PlayerPrompt
-
-		if gotPrompt != wantPrompt {
-				t.Errorf("got '%s', want '%s'", gotPrompt, wantPrompt)
-		}
-
-		if game.StartCalledWith != 7 {
-				t.Errorf("wanted Start called with 7 but got %d", game.StartCalledWith)
-		}
+		assertMessagesSentToUser(t, stdout, wantPrompt)
+		assertGameStartedWith(t, game, 7)
 	})
 
 	t.Run("deve retornar um um erro caso usuario coloque um valor n valido para quantidade de jogadores", func(t *testing.T) {
 		stdout := &bytes.Buffer{}
-		in := strings.NewReader("Pies\n")
+		in := helpers.UserSends("Pies")
 		game := helpers.NovoGameSpy()
 
 		cli := cli.NovoCLI(in, stdout, game)
 
 		cli.JogarPoquer()
 
-		if game.StartCalled {
-			t.Errorf("game should not have started")
-		}
+		assertGameNotStarted(t, game)
 	})
 
 	t.Run("deve retornar uma mensagem de erro caso usuario coloque um valor n valido para quantidade de jogadores", func(t *testing.T) {
 		stdout := &bytes.Buffer{}
-		in := strings.NewReader("you're so silly\n")
+		in := helpers.UserSends("you're so silly")
 		game := helpers.NovoGameSpy()
 
 		cli := cli.NovoCLI(in, stdout, game)
 
 		cli.JogarPoquer()
 
-		gotPrompt := stdout.String()
-
 		wantPrompt := PlayerPrompt + BadPlayerInputErrMsg
 
-		if gotPrompt != wantPrompt {
-				t.Errorf("got '%s', want '%s'", gotPrompt, wantPrompt)
-		}
+		assertMessagesSentToUser(t, stdout, wantPrompt)
 	})
-
 }
 
 func verificaVitoriaJogador(t *testing.T, game *helpers.GameSpy, vencedor string) {
     t.Helper()
 
-    if game.FinishedWith != vencedor {
-        t.Errorf("nao armazenou o vencedor correto, recebi '%s' esperava '%s'", game.FinishedWith, vencedor)
+		if game.FinishedWith != vencedor {
+				t.Errorf("nao armazenou o vencedor correto, recebi '%s' esperava '%s'", game.FinishedWith, vencedor)
+		}
+}
+
+func assertMessagesSentToUser(t *testing.T, stdout *bytes.Buffer, messages ...string) {
+    t.Helper()
+    want := strings.Join(messages, "")
+    got := stdout.String()
+    if got != want {
+        t.Errorf("got '%s' sent to stdout but expected %+v", got, messages)
     }
+}
+
+func assertGameNotStarted(t *testing.T, game *helpers.GameSpy) {
+		t.Helper()
+		if game.StartCalled {
+			t.Errorf("expected game not to have started")
+		}
+}
+
+func assertGameStartedWith(t *testing.T, game *helpers.GameSpy, expectedPlayers int) {
+	t.Helper()
+	if game.StartCalledWith != expectedPlayers {
+		t.Errorf("expected game to have started with %d players but got %d", expectedPlayers, game.StartCalledWith)
+	}
+}
+
+func assertFinishCalledWith(t *testing.T, game *helpers.GameSpy, expectedWinner string) {
+	t.Helper()
+	if game.FinishedWith != expectedWinner {
+		t.Errorf("expected game to have finished with winner %q but got %q", expectedWinner, game.FinishedWith)
+	}
 }

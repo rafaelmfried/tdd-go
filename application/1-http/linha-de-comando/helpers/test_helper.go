@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"reflect"
+	"strings"
 	"tdd/application/1-http/linha-de-comando/armazenamento"
 	"tdd/application/1-http/linha-de-comando/liga"
 	"testing"
@@ -40,6 +41,14 @@ type EsbocoArmazenamentoJogador struct {
 	Pontuacoes map[string]int
 	RegistrosVitorias []string
 	Liga liga.Liga
+}
+
+func UserSends(inputs ...string) io.Reader {
+	var in strings.Builder
+	for _, input := range inputs {
+		in.WriteString(input + "\n")
+	}
+	return strings.NewReader(in.String())
 }
 
 var ErrJogadorNotFound = armazenamento.ErrJogadorNotFound
