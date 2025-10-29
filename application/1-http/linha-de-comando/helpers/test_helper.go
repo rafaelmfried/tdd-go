@@ -14,11 +14,21 @@ import (
 )
 
 type GameSpy struct {
+		StartCalled      bool
 		StartCalledWith  int
 		FinishedWith     string
 }
 
+func NovoGameSpy() *GameSpy {
+	return &GameSpy{
+		StartCalled:     false,
+		StartCalledWith: 0,
+		FinishedWith:    "",
+	}
+}
+
 func (g *GameSpy) Start(numberOfPlayers int) {
+		g.StartCalled = true
     g.StartCalledWith = numberOfPlayers
 }
 

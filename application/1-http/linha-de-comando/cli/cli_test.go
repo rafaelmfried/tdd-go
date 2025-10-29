@@ -88,7 +88,21 @@ func TestCLI(t *testing.T) {
 		if game.StartCalledWith != 7 {
 				t.Errorf("wanted Start called with 7 but got %d", game.StartCalledWith)
 		}
-})
+	})
+
+	t.Run("deve retornar um um erro caso usuario coloque um valor n valido para quantidade de jogadores", func(t *testing.T) {
+		stdout := &bytes.Buffer{}
+		in := strings.NewReader("Pies\n")
+		game := &helpers.GameSpy{}
+
+		cli := cli.NovoCLI(in, stdout, game)
+
+		cli.JogarPoquer()
+
+		if game.StartCalled {
+			t.Errorf("game should not have started")
+		}
+	})
 
 }
 
