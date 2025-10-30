@@ -61,3 +61,7 @@ Seek(offset int64, whence int) (int64, error)
 > }
 > n sera representado em minutos e quando o tempo chegar a bet dobra comecando em 100 fichas
 > O sistema deve avisar a cada iteracao
+
+# html/template sera usada para formar-mos templates html
+
+criaremos a rota /jogo que deve retornar um template html por meio de websocket
