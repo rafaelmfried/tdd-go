@@ -81,6 +81,10 @@ func NovaRequisicaoBuscaLiga() *http.Request {
 	return requisicao
 }
 
+func NovaRequisicaoJogo() *http.Request {
+	requisicao, _ := http.NewRequest(http.MethodGet, "/jogo", nil)
+	return requisicao
+}
 // Verification helpers
 func VerificarCorpoRequisicao(t *testing.T, recebido, esperado string) {
 	t.Helper()

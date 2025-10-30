@@ -241,4 +241,15 @@ func TestLiga(t *testing.T) {
 
 		helpers.VerificaLiga(t, recebido, ligaEsperada)
 	})
+
+	t.Run("GET /jogo retorna 200 OK", func(t *testing.T) {
+		servidor := NewServidorJogador(&helpers.EsbocoArmazenamentoJogador{})
+
+		requisicao := helpers.NovaRequisicaoJogo()
+		resposta := httptest.NewRecorder()
+
+		servidor.ServeHTTP(resposta, requisicao)
+
+		helpers.VerificarStatusCodeRequisicao(t, resposta.Code, http.StatusOK)
+	})
 }

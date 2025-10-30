@@ -6,6 +6,7 @@ import (
 	"net/http"
 	armazenamento "tdd/application/1-http/linha-de-comando/armazenamento"
 	"tdd/application/1-http/linha-de-comando/liga"
+	"text/template"
 )
 
 const JSONContentType = "application/json"
@@ -25,6 +26,7 @@ func NewServidorJogador(armazenamento armazenamento.ArmazenamentoJogador) *Servi
 	roteador := http.NewServeMux()
 	roteador.Handle("/jogadores/", http.HandlerFunc(s.tratarRequisicaoJogador))
 	roteador.Handle("/liga", http.HandlerFunc(s.tratarRequisicaoLiga))
+	roteador.Handle("/jogo", http.HandlerFunc(s.tratarRequisicaoJogo))
 	s.Handler = roteador
 	return s
 }
@@ -64,6 +66,15 @@ func (s *ServidorJogador) tratarRequisicaoJogador(writer http.ResponseWriter, re
 
 func (s *ServidorJogador) tratarRequisicaoLiga(writer http.ResponseWriter, request *http.Request) {
 	s.manipulaLiga(writer, *request)
+}
+
+func (s *ServidorJogador) tratarRequisicaoJogo(writer http.ResponseWriter, request *http.Request) {
+	tmpl, err := template.ParseFiles("jogo.html")
+	if err != nil {
+		http.Error(writer, "Erro ao carregar template", http.StatusInternalServerError)
+		return
+	}
+	tmpl.Execute(writer, nil)
 }
 
 func Server() {
